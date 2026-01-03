@@ -1,0 +1,23 @@
+{
+  "skills": [
+    {
+      "name": "open-python-skills",
+      "path": ".shared/open-python-skills/SKILL.md",
+      "description": "Python backend development expertise for FastAPI, security, database, caching"
+    }
+  ],
+  "commands": {
+    "search-fastapi": {
+      "description": "Search FastAPI best practices",
+      "command": "python3 .shared/open-python-skills/scripts/search.py \"$QUERY\" --domain fastapi"
+    },
+    "search-security": {
+      "description": "Search security patterns",
+      "command": "python3 .shared/open-python-skills/scripts/search.py \"$QUERY\" --domain security"
+    },
+    "search-db": {
+      "description": "Search knowledge database",
+      "command": "python3 .shared/open-python-skills/scripts/knowledge_db.py \"$QUERY\""
+    }
+  }
+}
