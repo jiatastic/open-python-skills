@@ -421,6 +421,34 @@
           "code": "#!/bin/sh -e\nset -x\n\nruff check --fix src\nruff format src"
         }
       ]
+    },
+    {
+      "id": "remove-emoji-deslop",
+      "category": "deslop",
+      "title": "Remove Emojis from Code",
+      "tags": [
+        "deslop",
+        "emoji",
+        "cleanup",
+        "code-quality",
+        "ai-generated"
+      ],
+      "summary": "Remove emoji characters from Python code, comments, and strings. Emojis in code reduce readability and are not suitable for production code.",
+      "content": "AI-generated code often includes emojis in comments, print statements, or error messages. While emojis can be helpful during development, they should be removed from production code.\n\nEmojis in code:\n- Reduce code readability\n- Can cause encoding issues\n- Are not professional\n- May break in some terminals\n- Can cause issues with code parsers\n\nUse regex patterns to remove emoji characters from code files.",
+      "code_examples": [
+        {
+          "description": "Remove emojis using regex",
+          "code": "import re\n\ndef remove_emoji(text: str) -> str:\n    \"\"\"Remove emoji characters from text.\"\"\"\n    emoji_pattern = re.compile(\n        \"[\"\n        \"\\U0001F600-\\U0001F64F\"  # emoticons\n        \"\\U0001F300-\\U0001F5FF\"  # symbols & pictographs\n        \"\\U0001F680-\\U0001F6FF\"  # transport & map symbols\n        \"\\U0001F1E0-\\U0001F1FF\"  # flags (iOS)\n        \"\\U00002702-\\U000027B0\"\n        \"\\U000024C2-\\U0001F251\"\n        \"]+\",\n        flags=re.UNICODE\n    )\n    return emoji_pattern.sub(\"\", text)\n\n# Usage\ncleaned = remove_emoji(\"Hello 🚀 World ✅\")\n# Result: \"Hello  World \""
+        },
+        {
+          "description": "Clean file removing emojis",
+          "code": "from pathlib import Path\n\ndef clean_file_emojis(file_path: Path) -> bool:\n    \"\"\"Remove emojis from a file.\"\"\"\n    content = file_path.read_text(encoding=\"utf-8\")\n    cleaned = remove_emoji(content)\n    \n    if content != cleaned:\n        file_path.write_text(cleaned, encoding=\"utf-8\")\n        return True\n    return False"
+        },
+        {
+          "description": "Using emoji library (alternative)",
+          "code": "# Install: pip install emoji\nimport emoji\n\ndef remove_emoji(text: str) -> str:\n    \"\"\"Remove emojis using emoji library.\"\"\"\n    return emoji.replace_emoji(text, replace=\"\")"
+        }
+      ]
     }
   ]
 }
