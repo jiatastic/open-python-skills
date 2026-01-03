@@ -32,18 +32,18 @@ Refactor this AI-generated code to follow best practices
 
 ### Reference Documents
 ```bash
-python3 .shared/open-python-skills/scripts/search.py "jwt authentication" --domain security
-python3 .shared/open-python-skills/scripts/search.py "dependency injection" --domain fastapi
-python3 .shared/open-python-skills/scripts/search.py "redis caching" --domain upstash
-python3 .shared/open-python-skills/scripts/search.py "naming conventions" --domain deslop
+python3 .shared/scripts/search.py "jwt authentication" --domain security
+python3 .shared/scripts/search.py "dependency injection" --domain fastapi
+python3 .shared/scripts/search.py "redis caching" --domain upstash
+python3 .shared/scripts/search.py "naming conventions" --domain deslop
 ```
 
 ### Knowledge Database (FastAPI Best Practices)
 ```bash
-python3 .shared/open-python-skills/scripts/knowledge_db.py "async routes"
-python3 .shared/open-python-skills/scripts/knowledge_db.py "pydantic" --category pydantic
-python3 .shared/open-python-skills/scripts/knowledge_db.py --get async-routes-io
-python3 .shared/open-python-skills/scripts/knowledge_db.py --list-categories
+python3 .shared/scripts/knowledge_db.py "async routes"
+python3 .shared/scripts/knowledge_db.py "pydantic" --category pydantic
+python3 .shared/scripts/knowledge_db.py --get async-routes-io
+python3 .shared/scripts/knowledge_db.py --list-categories
 ```
 
 ## Available Domains
