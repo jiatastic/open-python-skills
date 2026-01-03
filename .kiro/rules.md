@@ -4,24 +4,24 @@
 This project includes the **Python Backend Pro Max** skill for Python backend development.
 
 ### Skill Entry Point
-`.shared/open-python-skills/SKILL.md`
+`.shared/SKILL.md`
 
 ### Knowledge Sources
-1. **Reference Documents** (`.shared/open-python-skills/references/*.md`)
+1. **Reference Documents** (`.shared/references/*.md`)
    - 8 comprehensive guides covering FastAPI, security, database, etc.
 
-2. **Knowledge Database** (`.shared/open-python-skills/data/*.json`)
-   - 21 curated best practices from zhanymkanov/fastapi-best-practices
+2. **Knowledge Database** (`.shared/data/*.json`)
+   - 22 curated best practices from zhanymkanov/fastapi-best-practices
 
 ### Search Commands
 ```bash
 # Reference search
-python3 .shared/open-python-skills/scripts/search.py "jwt" --domain security
+python3 .shared/scripts/search.py "jwt" --domain security
 
 # Knowledge database search
-python3 .shared/open-python-skills/scripts/knowledge_db.py "async routes"
-python3 .shared/open-python-skills/scripts/knowledge_db.py --get async-routes-io
-python3 .shared/open-python-skills/scripts/knowledge_db.py --list-categories
+python3 .shared/scripts/knowledge_db.py "async routes"
+python3 .shared/scripts/knowledge_db.py --get async-routes-io
+python3 .shared/scripts/knowledge_db.py --list-categories
 ```
 
 ## Activation Triggers

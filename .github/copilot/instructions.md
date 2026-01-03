@@ -1,37 +1,41 @@
-# GitHub Copilot Instructions
+# GitHub Copilot Instructions - Python Backend Pro Max
 
-## Python Backend Pro Max Skill
-
-This repository includes a Python backend development skill with comprehensive documentation.
+## Skill Overview
+This project uses the **Python Backend Pro Max** skill for Python backend development best practices.
 
 ### Skill Location
-- Main skill file: `.shared/open-python-skills/SKILL.md`
-- Reference documents: `.shared/open-python-skills/references/`
-- Knowledge database: `.shared/open-python-skills/data/`
-- Search scripts: `.shared/open-python-skills/scripts/`
+- Main skill file: `.shared/SKILL.md`
+- Reference documents: `.shared/references/`
+- Knowledge database: `.shared/data/`
+- Search scripts: `.shared/scripts/`
 
 ### Reference Documents
-
-| File | Topics |
-|------|--------|
-| `fastapi.md` | Project structure, dependency injection, async patterns, Pydantic |
-| `security.md` | JWT, OAuth2, password hashing, API keys, CORS, rate limiting |
-| `database.md` | SQLAlchemy 2.0, async operations, migrations, connection pooling |
-| `upstash.md` | Redis caching, session management, QStash background jobs |
-| `deslop.md` | AI code cleanup, refactoring patterns, naming conventions |
-| `api.md` | RESTful principles, versioning, pagination, error handling |
-| `perf.md` | Caching strategies, async optimization, profiling |
-| `template.md` | Project templates, microservice architecture |
+- `.shared/references/fastapi.md` - FastAPI best practices
+- `.shared/references/security.md` - Security patterns
+- `.shared/references/database.md` - Database operations
+- `.shared/references/upstash.md` - Redis/Upstash integration
+- `.shared/references/deslop.md` - Code cleanup guidelines
+- `.shared/references/api.md` - API design patterns
+- `.shared/references/perf.md` - Performance optimization
+- `.shared/references/template.md` - Project templates
 
 ### Search Commands
 ```bash
-python3 .shared/open-python-skills/scripts/search.py "query" --domain fastapi
-python3 .shared/open-python-skills/scripts/knowledge_db.py "query"
+python3 .shared/scripts/search.py "query" --domain fastapi
+python3 .shared/scripts/knowledge_db.py "query"
 ```
 
-### Best Practices
-1. Use async/await for I/O operations
-2. Validate with Pydantic models
-3. Use FastAPI's Depends() for dependency injection
-4. Validate early, fail fast with HTTPException
-5. Never trust user input, always hash passwords
+## When to Use
+- Building FastAPI REST APIs
+- Implementing authentication (JWT, OAuth2)
+- Working with SQLAlchemy databases
+- Setting up Redis caching
+- Refactoring AI-generated code
+- Optimizing performance
+
+## Core Principles
+1. Async-first for I/O operations
+2. Use Pydantic for validation
+3. Dependency injection with Depends()
+4. Validate early, fail fast
+5. Security by default

@@ -6,17 +6,17 @@ Search and use Python backend best practices from the knowledge base.
 
 1. Search reference documents:
    ```bash
-   python3 .shared/open-python-skills/scripts/search.py "{query}" --domain {domain}
+   python3 .shared/scripts/search.py "{{query}}" --domain {{domain}}
    ```
 
 2. Search knowledge database:
    ```bash
-   python3 .shared/open-python-skills/scripts/knowledge_db.py "{query}"
+   python3 .shared/scripts/knowledge_db.py "{{query}}"
    ```
 
 3. Get full entry with code examples:
    ```bash
-   python3 .shared/open-python-skills/scripts/knowledge_db.py --get {entry-id}
+   python3 .shared/scripts/knowledge_db.py --get {{entry-id}}
    ```
 
 ## Available Domains
@@ -32,13 +32,13 @@ Search and use Python backend best practices from the knowledge base.
 
 ## Reference Documents
 
-Located in `.shared/open-python-skills/references/`:
+Located in `.shared/references/`:
 - fastapi.md, security.md, database.md, upstash.md
 - deslop.md, api.md, perf.md, template.md
 
 ## Knowledge Database
 
-- `.shared/open-python-skills/data/fastapi_best_practices.json` - 21 curated entries
+- `.shared/data/fastapi_best_practices.json` - 22 curated entries
 
 ## Examples
 
