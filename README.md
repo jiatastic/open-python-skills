@@ -4,36 +4,40 @@ Command-line tool to install Python Backend Pro Max skill to different AI assist
 
 ## Installation
 
+No installation needed! Just use `uvx` to run directly:
+
 ```bash
-pip install open-python-skills
+uvx open-python-skills init --cursor
 ```
 
 ## Quick Start
 
 ```bash
-# Install to Cursor
-open-python-skills init --cursor
+# Run directly with uvx (no installation needed)
+uvx open-python-skills init --cursor
 
 # Install to all IDEs
-open-python-skills init --all
+uvx open-python-skills init --all
 ```
 
 ## Usage
 
+Use `uvx` to run commands directly:
+
 ```bash
 # Install to specific IDE
-open-python-skills init --cursor      # Cursor
-open-python-skills init --claude      # Claude Code
-open-python-skills init --windsurf    # Windsurf
-open-python-skills init --kiro        # Kiro
-open-python-skills init --copilot     # GitHub Copilot
-open-python-skills init --antigravity # Antigravity
+uvx open-python-skills init --cursor      # Cursor
+uvx open-python-skills init --claude      # Claude Code
+uvx open-python-skills init --windsurf    # Windsurf
+uvx open-python-skills init --kiro        # Kiro
+uvx open-python-skills init --copilot     # GitHub Copilot
+uvx open-python-skills init --antigravity # Antigravity
 
 # Install to multiple IDEs
-open-python-skills init --cursor --claude --windsurf
+uvx open-python-skills init --cursor --claude --windsurf
 
 # Install to all IDEs
-open-python-skills init --all
+uvx open-python-skills init --all
 ```
 
 ## Requirements
@@ -62,17 +66,7 @@ You can specify the project path using:
 
 ```bash
 export OPEN_PYTHON_SKILLS_PROJECT="/path/to/project"
-open-python-skills init --cursor
-```
-
-## Development
-
-```bash
-# Install in development mode
-pip install -e .
-
-# Run tests
-python -m pytest
+uvx open-python-skills init --cursor
 ```
 
 ## License
