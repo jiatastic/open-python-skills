@@ -1,22 +1,49 @@
 [project]
 name = "open-python-skills"
-version = "0.0.1"
-description = "CLI tool to install Python Backend Pro Max skill to AI assistants"
+version = "0.1.0"
+description = "AI skill for Python backend development - FastAPI, SQLAlchemy, Redis, security patterns"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
     {name = "Haoxiang Jia", email = "henry@podpitch.com"}
 ]
-keywords = ["fastapi", "python", "backend", "cli", "ai-assistant", "skills"]
+keywords = [
+    "fastapi", 
+    "python", 
+    "backend", 
+    "cli", 
+    "ai-assistant", 
+    "skills",
+    "cursor",
+    "claude",
+    "windsurf",
+    "copilot",
+    "sqlalchemy",
+    "redis",
+    "upstash"
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Code Generators",
+    "Environment :: Console",
 ]
+
+[project.urls]
+Homepage = "https://github.com/henryperkins/open-python-skills"
+Repository = "https://github.com/henryperkins/open-python-skills"
+Documentation = "https://github.com/henryperkins/open-python-skills#readme"
+Issues = "https://github.com/henryperkins/open-python-skills/issues"
 
 [project.scripts]
 open-python-skills = "open_python_skills.cli:main_entry"
@@ -25,7 +52,19 @@ open-python-skills = "open_python_skills.cli:main_entry"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["open_python_skills"]
+
+[tool.hatch.build.targets.wheel.sources]
+"open_python_skills" = "open_python_skills"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "open_python_skills/**",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
 [tool.uv]
 dev-dependencies = []
-
-[tool.uv.sources]

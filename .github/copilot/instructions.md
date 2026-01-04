@@ -1,28 +1,19 @@
-# GitHub Copilot Instructions - Python Backend Pro Max
+# GitHub Copilot Instructions - open-python-skills
 
 ## Skill Overview
-This project uses the **Python Backend Pro Max** skill for Python backend development best practices.
+This project uses the **open-python-skills** knowledge base for Python backend development best practices.
 
 ### Skill Location
 - Main skill file: `.shared/SKILL.md`
-- Reference documents: `.shared/references/`
 - Knowledge database: `.shared/data/`
 - Search scripts: `.shared/scripts/`
 
-### Reference Documents
-- `.shared/references/fastapi.md` - FastAPI best practices
-- `.shared/references/security.md` - Security patterns
-- `.shared/references/database.md` - Database operations
-- `.shared/references/upstash.md` - Redis/Upstash integration
-- `.shared/references/deslop.md` - Code cleanup guidelines
-- `.shared/references/api.md` - API design patterns
-- `.shared/references/perf.md` - Performance optimization
-- `.shared/references/template.md` - Project templates
-
 ### Search Commands
 ```bash
-python3 .shared/scripts/search.py "query" --domain fastapi
 python3 .shared/scripts/knowledge_db.py "query"
+python3 .shared/scripts/knowledge_db.py "query" --category security
+python3 .shared/scripts/knowledge_db.py --get entry-id
+python3 .shared/scripts/knowledge_db.py --list-categories
 ```
 
 ## When to Use

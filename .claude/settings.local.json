@@ -3,21 +3,29 @@
     {
       "name": "open-python-skills",
       "path": ".shared/SKILL.md",
-      "description": "Python backend development expertise for FastAPI, security, database, caching"
+      "description": "Python backend development expertise for FastAPI, security, database, caching, and best practices"
     }
   ],
   "commands": {
-    "search-fastapi": {
-      "description": "Search FastAPI best practices",
-      "command": "python3 .shared/scripts/search.py \"$QUERY\" --domain fastapi"
-    },
-    "search-security": {
-      "description": "Search security patterns",
-      "command": "python3 .shared/scripts/search.py \"$QUERY\" --domain security"
-    },
-    "search-db": {
-      "description": "Search knowledge database",
+    "kb-search": {
+      "description": "Search open-python-skills knowledge base",
       "command": "python3 .shared/scripts/knowledge_db.py \"$QUERY\""
+    },
+    "kb-get": {
+      "description": "Get full entry by ID",
+      "command": "python3 .shared/scripts/knowledge_db.py --get \"$QUERY\""
+    },
+    "kb-categories": {
+      "description": "List categories",
+      "command": "python3 .shared/scripts/knowledge_db.py --list-categories"
+    },
+    "kb-tags": {
+      "description": "List tags",
+      "command": "python3 .shared/scripts/knowledge_db.py --list-tags"
+    },
+    "kb-stats": {
+      "description": "Show knowledge base statistics",
+      "command": "python3 .shared/scripts/knowledge_db.py --stats"
     }
   }
 }

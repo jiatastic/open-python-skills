@@ -6,21 +6,19 @@
 `.shared/SKILL.md`
 
 ### Description
-Python backend development expertise for FastAPI, security, database, caching
+Python backend development expertise for FastAPI, security, database, caching, and best practices
 
 ### Knowledge Sources
-- Reference Documents: `.shared/references/*.md`
 - Knowledge Database: `.shared/data/*.json`
 - Search Scripts: `.shared/scripts/*.py`
 
 ### Usage
 ```bash
-# Search reference documents
-python3 .shared/scripts/search.py "query" --domain fastapi
-
 # Search knowledge database
 python3 .shared/scripts/knowledge_db.py "query"
 python3 .shared/scripts/knowledge_db.py --get entry-id
+python3 .shared/scripts/knowledge_db.py --list-categories
+python3 .shared/scripts/knowledge_db.py --stats
 ```
 
 ### Supported IDEs

@@ -1,0 +1,418 @@
+{
+  "source": "Curated performance patterns",
+  "version": "2026-01",
+  "description": "Performance patterns for Python backends",
+  "entries": [
+    {
+      "id": "perf-avoid-blocking-async",
+      "category": "performance",
+      "title": "Avoid Blocking Calls in async Routes",
+      "tags": [
+        "perf",
+        "async",
+        "blocking",
+        "event-loop"
+      ],
+      "summary": "Blocking calls inside async routes will block the event loop; use awaitables or sync routes.",
+      "content": "If you must call a sync SDK from an async route, run it in a threadpool. For CPU-heavy work, use separate worker processes. FastAPI runs sync routes in threadpool automatically, but async routes run on the event loop - blocking them blocks everything.",
+      "code_examples": [
+        {
+          "description": "Run sync function in threadpool",
+          "code": "from fastapi.concurrency import run_in_threadpool\n\nasync def handler():\n    result = await run_in_threadpool(sync_call, 123)\n    return result\n"
+        },
+        {
+          "description": "BAD - blocks event loop",
+          "code": "@router.get(\"/terrible-ping\")\nasync def terrible_ping():\n    time.sleep(10)  # I/O blocking operation, whole process blocked\n    return {\"pong\": True}\n"
+        },
+        {
+          "description": "GOOD - runs in threadpool",
+          "code": "@router.get(\"/good-ping\")\ndef good_ping():\n    time.sleep(10)  # Blocking but in separate thread\n    return {\"pong\": True}\n"
+        },
+        {
+          "description": "PERFECT - non-blocking async",
+          "code": "@router.get(\"/perfect-ping\")\nasync def perfect_ping():\n    await asyncio.sleep(10)  # Non-blocking I/O\n    return {\"pong\": True}\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-cpu-intensive-tasks",
+      "category": "performance",
+      "title": "CPU Intensive Tasks - Use Workers",
+      "tags": [
+        "perf",
+        "cpu",
+        "gil",
+        "workers",
+        "multiprocessing"
+      ],
+      "summary": "CPU-intensive tasks should not be awaited or run in threadpool due to GIL. Send them to workers in another process.",
+      "content": "Operations that are non-blocking awaitables or sent to thread pool must be I/O intensive tasks (e.g. open file, db call, external API call). Awaiting CPU-intensive tasks is worthless - CPU has to work to finish. Running CPU-intensive tasks in threads isn't effective due to GIL (Global Interpreter Lock). If you want to optimize CPU intensive tasks, send them to workers in another process using ProcessPoolExecutor or task queues like Celery.",
+      "code_examples": [
+        {
+          "description": "Use ProcessPoolExecutor for CPU-bound work",
+          "code": "import asyncio\nfrom concurrent.futures import ProcessPoolExecutor\n\nexecutor = ProcessPoolExecutor(max_workers=4)\n\ndef cpu_heavy_task(data):\n    # CPU-intensive computation\n    return sum(i * i for i in range(10_000_000))\n\nasync def handler():\n    loop = asyncio.get_event_loop()\n    result = await loop.run_in_executor(executor, cpu_heavy_task, data)\n    return result\n"
+        },
+        {
+          "description": "Use Celery for heavy background processing",
+          "code": "from celery import Celery\n\ncelery_app = Celery(\"tasks\", broker=\"redis://localhost\")\n\n@celery_app.task\ndef heavy_computation(data):\n    # CPU-intensive work\n    return process(data)\n\n# In FastAPI route\n@router.post(\"/process\")\nasync def process_data(data: dict):\n    task = heavy_computation.delay(data)\n    return {\"task_id\": task.id}\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-read-through-cache",
+      "category": "performance",
+      "title": "Read-through Cache Pattern",
+      "tags": [
+        "perf",
+        "cache",
+        "redis",
+        "pattern",
+        "cache-aside"
+      ],
+      "summary": "Cache-aside: read cache first, compute/fetch on miss, then store with TTL.",
+      "content": "Use deterministic cache keys and TTLs. Consider cache stampede mitigation for hot keys. This pattern reduces database load and improves response times for frequently accessed data.",
+      "code_examples": [
+        {
+          "description": "Cache-aside flow with Redis",
+          "code": "import json\nfrom redis import Redis\n\nredis = Redis()\n\nasync def get_user(user_id: str) -> dict:\n    cache_key = f\"user:{user_id}\"\n    \n    # Try cache first\n    cached = redis.get(cache_key)\n    if cached:\n        return json.loads(cached)\n    \n    # Cache miss - fetch from DB\n    user = await db.fetch_user(user_id)\n    \n    # Store with TTL\n    redis.setex(cache_key, 300, json.dumps(user))\n    return user\n"
+        },
+        {
+          "description": "Cache stampede mitigation with locking",
+          "code": "import asyncio\nfrom redis import Redis\n\nredis = Redis()\n\nasync def get_with_lock(cache_key: str, compute_fn):\n    cached = redis.get(cache_key)\n    if cached:\n        return json.loads(cached)\n    \n    lock_key = f\"lock:{cache_key}\"\n    # Try to acquire lock (NX = only if not exists)\n    if redis.set(lock_key, \"1\", nx=True, ex=10):\n        try:\n            value = await compute_fn()\n            redis.setex(cache_key, 300, json.dumps(value))\n            return value\n        finally:\n            redis.delete(lock_key)\n    else:\n        # Wait for other process to populate cache\n        await asyncio.sleep(0.1)\n        return await get_with_lock(cache_key, compute_fn)\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-lru-cache",
+      "category": "performance",
+      "title": "In-Memory Caching with lru_cache",
+      "tags": [
+        "perf",
+        "cache",
+        "memory",
+        "functools",
+        "lru_cache"
+      ],
+      "summary": "Use functools.lru_cache for caching expensive pure function results in memory.",
+      "content": "lru_cache provides simple in-memory caching for pure functions (no side effects). Use for expensive computations, config loading, or API clients. Be careful with memory usage - set maxsize appropriately. For async functions, consider cachetools or aiocache.",
+      "code_examples": [
+        {
+          "description": "Basic lru_cache usage",
+          "code": "from functools import lru_cache\n\n@lru_cache(maxsize=128)\ndef expensive_computation(n: int) -> int:\n    # Expensive calculation\n    return sum(i ** 2 for i in range(n))\n\n# Results are cached by argument\nresult1 = expensive_computation(1000)  # Computed\nresult2 = expensive_computation(1000)  # Cached\n"
+        },
+        {
+          "description": "Cache settings/config loading",
+          "code": "from functools import lru_cache\nfrom pydantic_settings import BaseSettings\n\nclass Settings(BaseSettings):\n    database_url: str\n    redis_url: str\n    debug: bool = False\n\n@lru_cache\ndef get_settings() -> Settings:\n    return Settings()\n\n# Usage in dependency\ndef get_db(settings: Settings = Depends(get_settings)):\n    return Database(settings.database_url)\n"
+        },
+        {
+          "description": "Cache with TTL using cachetools",
+          "code": "from cachetools import TTLCache\nfrom cachetools.func import ttl_cache\n\n# Function decorator with TTL\n@ttl_cache(maxsize=100, ttl=300)  # 5 minute TTL\ndef get_config(key: str) -> dict:\n    return fetch_from_db(key)\n\n# Manual cache with TTL\ncache = TTLCache(maxsize=100, ttl=300)\n\ndef get_user(user_id: str):\n    if user_id in cache:\n        return cache[user_id]\n    user = fetch_user(user_id)\n    cache[user_id] = user\n    return user\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-connection-pooling",
+      "category": "performance",
+      "title": "Database Connection Pooling",
+      "tags": [
+        "perf",
+        "database",
+        "pool",
+        "sqlalchemy",
+        "connections"
+      ],
+      "summary": "Configure connection pools properly to balance resource usage and performance.",
+      "content": "Connection pooling reuses database connections to avoid the overhead of creating new connections. Configure pool_size based on your workload. Use pool_pre_ping for reliability. For async applications, use AsyncAdaptedQueuePool. Never share engines across processes.",
+      "code_examples": [
+        {
+          "description": "Configure SQLAlchemy connection pool",
+          "code": "from sqlalchemy import create_engine\n\nengine = create_engine(\n    \"postgresql+psycopg2://user:pass@localhost/db\",\n    pool_size=20,          # Persistent connections\n    max_overflow=10,       # Additional connections allowed\n    pool_timeout=30,       # Seconds to wait for connection\n    pool_recycle=3600,     # Recycle connections after 1 hour\n    pool_pre_ping=True,    # Test connections before use\n)\n"
+        },
+        {
+          "description": "Async SQLAlchemy connection pool",
+          "code": "from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession\nfrom sqlalchemy.orm import sessionmaker\n\nengine = create_async_engine(\n    \"postgresql+asyncpg://user:pass@localhost/db\",\n    pool_size=20,\n    max_overflow=10,\n    pool_pre_ping=True,\n)\n\nasync_session = sessionmaker(\n    engine, class_=AsyncSession, expire_on_commit=False\n)\n\nasync def get_db():\n    async with async_session() as session:\n        yield session\n"
+        },
+        {
+          "description": "Disable pooling for serverless (NullPool)",
+          "code": "from sqlalchemy import create_engine\nfrom sqlalchemy.pool import NullPool\n\n# For serverless/Lambda - no connection reuse\nengine = create_engine(\n    \"postgresql+psycopg2://user:pass@localhost/db\",\n    poolclass=NullPool,\n)\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-streaming-response",
+      "category": "performance",
+      "title": "Streaming Large Responses",
+      "tags": [
+        "perf",
+        "streaming",
+        "memory",
+        "large-files",
+        "generator"
+      ],
+      "summary": "Use StreamingResponse for large files or data to avoid loading everything into memory.",
+      "content": "StreamingResponse allows sending data incrementally as it's generated, reducing memory usage for large responses. Use async generators for non-blocking streaming. Ideal for file downloads, large API responses, or real-time data.",
+      "code_examples": [
+        {
+          "description": "Stream large file download",
+          "code": "from fastapi import FastAPI\nfrom fastapi.responses import StreamingResponse\nfrom pathlib import Path\n\napp = FastAPI()\n\ndef iter_file(file_path: Path, chunk_size: int = 8192):\n    with open(file_path, \"rb\") as f:\n        while chunk := f.read(chunk_size):\n            yield chunk\n\n@app.get(\"/download/{filename}\")\nasync def download_file(filename: str):\n    file_path = Path(f\"./files/{filename}\")\n    return StreamingResponse(\n        iter_file(file_path),\n        media_type=\"application/octet-stream\",\n        headers={\"Content-Disposition\": f\"attachment; filename={filename}\"}\n    )\n"
+        },
+        {
+          "description": "Stream database results",
+          "code": "from fastapi.responses import StreamingResponse\nimport json\n\nasync def stream_users():\n    offset = 0\n    batch_size = 100\n    \n    yield \"[\"\n    first = True\n    \n    while True:\n        users = await db.fetch_users(offset=offset, limit=batch_size)\n        if not users:\n            break\n        \n        for user in users:\n            if not first:\n                yield \",\"\n            yield json.dumps(user)\n            first = False\n        \n        offset += batch_size\n    \n    yield \"]\"\n\n@app.get(\"/users/stream\")\nasync def get_users_stream():\n    return StreamingResponse(\n        stream_users(),\n        media_type=\"application/json\"\n    )\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-gzip-compression",
+      "category": "performance",
+      "title": "Response Compression with GZip",
+      "tags": [
+        "perf",
+        "compression",
+        "gzip",
+        "middleware",
+        "bandwidth"
+      ],
+      "summary": "Enable GZip compression to reduce response sizes and bandwidth usage.",
+      "content": "GZipMiddleware automatically compresses responses for clients that support it. Configure minimum_size to avoid compressing small responses (overhead not worth it). Adjust compresslevel based on CPU vs bandwidth tradeoff.",
+      "code_examples": [
+        {
+          "description": "Enable GZip middleware",
+          "code": "from fastapi import FastAPI\nfrom fastapi.middleware.gzip import GZipMiddleware\n\napp = FastAPI()\n\n# Only compress responses > 1KB\n# Level 5 balances speed vs compression ratio\napp.add_middleware(\n    GZipMiddleware,\n    minimum_size=1000,\n    compresslevel=5\n)\n\n@app.get(\"/large-data\")\nasync def get_large_data():\n    return {\"data\": \"x\" * 10000}  # Will be compressed\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-semaphore-limiting",
+      "category": "performance",
+      "title": "Concurrency Limiting with Semaphores",
+      "tags": [
+        "perf",
+        "concurrency",
+        "semaphore",
+        "rate-limit",
+        "anyio"
+      ],
+      "summary": "Use semaphores to limit concurrent access to shared resources or external APIs.",
+      "content": "Semaphores prevent overwhelming external services or resources by limiting concurrent operations. Use asyncio.Semaphore or anyio.Semaphore/CapacityLimiter. Essential for rate-limiting API calls, database connections, or file operations.",
+      "code_examples": [
+        {
+          "description": "Limit concurrent API calls",
+          "code": "import asyncio\nimport httpx\n\n# Allow max 10 concurrent API calls\nsemaphore = asyncio.Semaphore(10)\n\nasync def fetch_with_limit(url: str) -> dict:\n    async with semaphore:\n        async with httpx.AsyncClient() as client:\n            response = await client.get(url)\n            return response.json()\n\nasync def fetch_all(urls: list[str]):\n    tasks = [fetch_with_limit(url) for url in urls]\n    return await asyncio.gather(*tasks)\n"
+        },
+        {
+          "description": "AnyIO CapacityLimiter with statistics",
+          "code": "import anyio\n\n# Limit concurrent operations\nlimiter = anyio.CapacityLimiter(5)\n\nasync def limited_operation(name: str):\n    async with limiter:\n        print(f\"{name} acquired - available: {limiter.available_tokens}\")\n        await anyio.sleep(1)\n        return f\"Done: {name}\"\n\nasync def main():\n    async with anyio.create_task_group() as tg:\n        for i in range(20):\n            tg.start_soon(limited_operation, f\"Task-{i}\")\n"
+        },
+        {
+          "description": "Global limiter as dependency",
+          "code": "from asyncio import Semaphore\nfrom fastapi import Depends\n\n# Global semaphore for external API\nexternal_api_semaphore = Semaphore(5)\n\nasync def get_api_limiter():\n    return external_api_semaphore\n\n@router.get(\"/external-data\")\nasync def get_external_data(\n    limiter: Semaphore = Depends(get_api_limiter)\n):\n    async with limiter:\n        return await call_external_api()\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-background-tasks",
+      "category": "performance",
+      "title": "Background Tasks for Deferred Work",
+      "tags": [
+        "perf",
+        "background",
+        "async",
+        "deferred",
+        "non-blocking"
+      ],
+      "summary": "Use BackgroundTasks to execute work after sending the response.",
+      "content": "BackgroundTasks run after the response is sent, keeping endpoints fast. Use for logging, sending emails, updating analytics, or cleanup. For long-running tasks, use Celery or similar task queues instead.",
+      "code_examples": [
+        {
+          "description": "Send email in background",
+          "code": "from fastapi import BackgroundTasks, FastAPI\n\napp = FastAPI()\n\nasync def send_email(email: str, message: str):\n    # Simulate email sending\n    await asyncio.sleep(2)\n    print(f\"Email sent to {email}: {message}\")\n\n@app.post(\"/register\")\nasync def register_user(\n    email: str,\n    background_tasks: BackgroundTasks\n):\n    # Create user immediately\n    user = await create_user(email)\n    \n    # Send welcome email after response\n    background_tasks.add_task(\n        send_email,\n        email,\n        \"Welcome to our platform!\"\n    )\n    \n    return {\"user_id\": user.id}\n"
+        },
+        {
+          "description": "Multiple background tasks",
+          "code": "from fastapi import BackgroundTasks\n\ndef log_operation(operation: str, user_id: str):\n    # Sync function - runs in threadpool\n    with open(\"audit.log\", \"a\") as f:\n        f.write(f\"{operation}: {user_id}\\n\")\n\nasync def update_analytics(event: str):\n    # Async function\n    await analytics_client.track(event)\n\n@app.post(\"/action\")\nasync def perform_action(\n    user_id: str,\n    background_tasks: BackgroundTasks\n):\n    result = await do_action(user_id)\n    \n    # Add multiple background tasks\n    background_tasks.add_task(log_operation, \"action\", user_id)\n    background_tasks.add_task(update_analytics, \"action_performed\")\n    \n    return result\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-batch-operations",
+      "category": "performance",
+      "title": "Batch Database Operations",
+      "tags": [
+        "perf",
+        "database",
+        "batch",
+        "bulk",
+        "n+1"
+      ],
+      "summary": "Batch database operations to reduce round-trips and avoid N+1 query problems.",
+      "content": "Instead of querying the database in a loop, batch operations into single queries. Use bulk inserts, IN clauses, and eager loading to minimize database round-trips. This dramatically improves performance for operations on multiple records.",
+      "code_examples": [
+        {
+          "description": "Batch fetch with IN clause",
+          "code": "from sqlalchemy import select\n\n# BAD: N+1 queries\nasync def get_users_bad(user_ids: list[str]):\n    users = []\n    for user_id in user_ids:\n        user = await session.execute(\n            select(User).where(User.id == user_id)\n        )\n        users.append(user.scalar_one())\n    return users\n\n# GOOD: Single query with IN\nasync def get_users_good(user_ids: list[str]):\n    result = await session.execute(\n        select(User).where(User.id.in_(user_ids))\n    )\n    return result.scalars().all()\n"
+        },
+        {
+          "description": "Bulk insert",
+          "code": "from sqlalchemy import insert\n\n# BAD: Individual inserts\nasync def create_items_bad(items: list[dict]):\n    for item in items:\n        await session.execute(insert(Item).values(**item))\n        await session.commit()\n\n# GOOD: Bulk insert\nasync def create_items_good(items: list[dict]):\n    await session.execute(insert(Item).values(items))\n    await session.commit()\n"
+        },
+        {
+          "description": "Eager loading relationships",
+          "code": "from sqlalchemy.orm import selectinload, joinedload\n\n# Eager load to avoid N+1 on relationships\nasync def get_posts_with_authors():\n    result = await session.execute(\n        select(Post)\n        .options(selectinload(Post.author))  # Load authors in separate query\n        .options(joinedload(Post.comments))  # Join comments\n    )\n    return result.scalars().all()\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-sql-first",
+      "category": "performance",
+      "title": "SQL-First Data Processing",
+      "tags": [
+        "perf",
+        "database",
+        "sql",
+        "aggregation",
+        "optimization"
+      ],
+      "summary": "Let the database handle data processing - it's faster than Python.",
+      "content": "Databases are optimized for data processing. Do complex joins, aggregations, and transformations in SQL rather than fetching raw data and processing in Python. Use database functions for JSON aggregation to reduce round-trips for nested data.",
+      "code_examples": [
+        {
+          "description": "Aggregate JSON in database",
+          "code": "from sqlalchemy import func, select, text\n\n# Build nested JSON in database\nselect_query = (\n    select(\n        Post.id,\n        Post.title,\n        func.json_build_object(\n            text(\"'id', users.id\"),\n            text(\"'name', users.name\"),\n            text(\"'email', users.email\"),\n        ).label(\"author\"),\n    )\n    .select_from(Post)\n    .join(User, Post.author_id == User.id)\n    .where(Post.published == True)\n)\n\nresult = await session.execute(select_query)\nreturn result.mappings().all()\n"
+        },
+        {
+          "description": "Use database for aggregations",
+          "code": "from sqlalchemy import func, select\n\n# BAD: Fetch all and aggregate in Python\nasync def get_stats_bad():\n    orders = await session.execute(select(Order))\n    all_orders = orders.scalars().all()\n    return {\n        \"total\": sum(o.amount for o in all_orders),\n        \"count\": len(all_orders),\n        \"avg\": sum(o.amount for o in all_orders) / len(all_orders)\n    }\n\n# GOOD: Aggregate in database\nasync def get_stats_good():\n    result = await session.execute(\n        select(\n            func.sum(Order.amount).label(\"total\"),\n            func.count(Order.id).label(\"count\"),\n            func.avg(Order.amount).label(\"avg\")\n        )\n    )\n    row = result.one()\n    return {\"total\": row.total, \"count\": row.count, \"avg\": row.avg}\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-lazy-loading",
+      "category": "performance",
+      "title": "Lazy Loading and Pagination",
+      "tags": [
+        "perf",
+        "pagination",
+        "lazy",
+        "cursor",
+        "offset"
+      ],
+      "summary": "Use pagination to limit data fetched and reduce memory usage.",
+      "content": "Never fetch unbounded result sets. Use LIMIT/OFFSET for simple pagination or cursor-based pagination for large datasets. Cursor pagination is more efficient and consistent for real-time data.",
+      "code_examples": [
+        {
+          "description": "Offset-based pagination",
+          "code": "from fastapi import Query\nfrom sqlalchemy import select\n\n@router.get(\"/items\")\nasync def list_items(\n    page: int = Query(1, ge=1),\n    size: int = Query(20, ge=1, le=100)\n):\n    offset = (page - 1) * size\n    \n    result = await session.execute(\n        select(Item)\n        .order_by(Item.created_at.desc())\n        .offset(offset)\n        .limit(size)\n    )\n    \n    items = result.scalars().all()\n    total = await session.scalar(select(func.count(Item.id)))\n    \n    return {\n        \"items\": items,\n        \"page\": page,\n        \"size\": size,\n        \"total\": total,\n        \"pages\": (total + size - 1) // size\n    }\n"
+        },
+        {
+          "description": "Cursor-based pagination (more efficient)",
+          "code": "from fastapi import Query\nfrom sqlalchemy import select\nimport base64\n\n@router.get(\"/items\")\nasync def list_items(\n    cursor: str | None = None,\n    size: int = Query(20, ge=1, le=100)\n):\n    query = select(Item).order_by(Item.id.desc()).limit(size + 1)\n    \n    if cursor:\n        last_id = int(base64.b64decode(cursor))\n        query = query.where(Item.id < last_id)\n    \n    result = await session.execute(query)\n    items = result.scalars().all()\n    \n    has_more = len(items) > size\n    items = items[:size]\n    \n    next_cursor = None\n    if has_more and items:\n        next_cursor = base64.b64encode(str(items[-1].id).encode()).decode()\n    \n    return {\n        \"items\": items,\n        \"next_cursor\": next_cursor,\n        \"has_more\": has_more\n    }\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-async-gather",
+      "category": "performance",
+      "title": "Parallel Async Operations with gather",
+      "tags": [
+        "perf",
+        "async",
+        "parallel",
+        "gather",
+        "concurrent"
+      ],
+      "summary": "Use asyncio.gather to run independent async operations in parallel.",
+      "content": "When you need results from multiple independent async operations, run them in parallel with asyncio.gather instead of awaiting sequentially. This can dramatically reduce total latency.",
+      "code_examples": [
+        {
+          "description": "Parallel data fetching",
+          "code": "import asyncio\n\n# BAD: Sequential - total time = sum of all\nasync def get_dashboard_slow(user_id: str):\n    user = await get_user(user_id)        # 100ms\n    orders = await get_orders(user_id)    # 150ms\n    stats = await get_stats(user_id)      # 80ms\n    return {\"user\": user, \"orders\": orders, \"stats\": stats}\n    # Total: ~330ms\n\n# GOOD: Parallel - total time = max of all\nasync def get_dashboard_fast(user_id: str):\n    user, orders, stats = await asyncio.gather(\n        get_user(user_id),\n        get_orders(user_id),\n        get_stats(user_id),\n    )\n    return {\"user\": user, \"orders\": orders, \"stats\": stats}\n    # Total: ~150ms\n"
+        },
+        {
+          "description": "Gather with error handling",
+          "code": "import asyncio\n\nasync def safe_fetch(url: str):\n    try:\n        return await fetch_data(url)\n    except Exception as e:\n        return {\"error\": str(e), \"url\": url}\n\nasync def fetch_all_data(urls: list[str]):\n    # return_exceptions=True prevents one failure from canceling all\n    results = await asyncio.gather(\n        *[safe_fetch(url) for url in urls],\n        return_exceptions=True\n    )\n    return results\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-response-serialization",
+      "category": "performance",
+      "title": "Optimize Response Serialization",
+      "tags": [
+        "perf",
+        "serialization",
+        "pydantic",
+        "response",
+        "orjson"
+      ],
+      "summary": "Avoid double serialization and use fast JSON libraries like orjson.",
+      "content": "FastAPI validates responses with response_model, creating Pydantic objects twice. For high-throughput endpoints, consider returning Response directly or using orjson for faster serialization.",
+      "code_examples": [
+        {
+          "description": "Use ORJSONResponse for speed",
+          "code": "from fastapi import FastAPI\nfrom fastapi.responses import ORJSONResponse\n\n# Set as default response class\napp = FastAPI(default_response_class=ORJSONResponse)\n\n# Or per-route\n@app.get(\"/fast\", response_class=ORJSONResponse)\nasync def fast_endpoint():\n    return {\"data\": [1, 2, 3] * 1000}\n"
+        },
+        {
+          "description": "Skip response validation for trusted data",
+          "code": "from fastapi import Response\nimport orjson\n\n@app.get(\"/raw\")\nasync def raw_response():\n    # Skip Pydantic validation for internal/trusted data\n    data = await get_trusted_data()\n    return Response(\n        content=orjson.dumps(data),\n        media_type=\"application/json\"\n    )\n"
+        },
+        {
+          "description": "Optimize Pydantic model serialization",
+          "code": "from pydantic import BaseModel, ConfigDict\n\nclass FastModel(BaseModel):\n    model_config = ConfigDict(\n        # Faster validation\n        validate_default=False,\n        # Use slots for memory efficiency\n        extra=\"forbid\",\n    )\n    \n    id: int\n    name: str\n    data: dict\n    \n    def model_dump_fast(self):\n        # Bypass some validation for known-good data\n        return {\"id\": self.id, \"name\": self.name, \"data\": self.data}\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-profiling",
+      "category": "performance",
+      "title": "Profiling and Performance Monitoring",
+      "tags": [
+        "perf",
+        "profiling",
+        "monitoring",
+        "timing",
+        "debugging"
+      ],
+      "summary": "Use profiling tools to identify performance bottlenecks.",
+      "content": "Profile your application to find actual bottlenecks before optimizing. Use middleware for request timing, cProfile for CPU profiling, and memory_profiler for memory issues. In production, use APM tools like Datadog or New Relic.",
+      "code_examples": [
+        {
+          "description": "Request timing middleware",
+          "code": "import time\nfrom fastapi import FastAPI, Request\nimport logging\n\nlogger = logging.getLogger(__name__)\n\n@app.middleware(\"http\")\nasync def timing_middleware(request: Request, call_next):\n    start_time = time.perf_counter()\n    response = await call_next(request)\n    process_time = time.perf_counter() - start_time\n    \n    # Add timing header\n    response.headers[\"X-Process-Time\"] = f\"{process_time:.4f}\"\n    \n    # Log slow requests\n    if process_time > 1.0:\n        logger.warning(\n            f\"Slow request: {request.method} {request.url.path} \"\n            f\"took {process_time:.2f}s\"\n        )\n    \n    return response\n"
+        },
+        {
+          "description": "Profile specific functions",
+          "code": "import cProfile\nimport pstats\nfrom io import StringIO\n\ndef profile_function(func):\n    \"\"\"Decorator to profile a function.\"\"\"\n    def wrapper(*args, **kwargs):\n        profiler = cProfile.Profile()\n        profiler.enable()\n        \n        result = func(*args, **kwargs)\n        \n        profiler.disable()\n        \n        # Print stats\n        stream = StringIO()\n        stats = pstats.Stats(profiler, stream=stream)\n        stats.sort_stats(\"cumulative\")\n        stats.print_stats(20)  # Top 20 functions\n        print(stream.getvalue())\n        \n        return result\n    return wrapper\n\n@profile_function\ndef expensive_operation():\n    # Code to profile\n    pass\n"
+        },
+        {
+          "description": "Async timing context manager",
+          "code": "import time\nfrom contextlib import asynccontextmanager\nimport logging\n\nlogger = logging.getLogger(__name__)\n\n@asynccontextmanager\nasync def timed_operation(name: str):\n    start = time.perf_counter()\n    try:\n        yield\n    finally:\n        elapsed = time.perf_counter() - start\n        logger.info(f\"{name} took {elapsed:.4f}s\")\n\n# Usage\nasync def handler():\n    async with timed_operation(\"database_query\"):\n        result = await db.query()\n    \n    async with timed_operation(\"external_api\"):\n        data = await api.fetch()\n    \n    return {\"result\": result, \"data\": data}\n"
+        }
+      ]
+    },
+    {
+      "id": "perf-httpx-connection-pool",
+      "category": "performance",
+      "title": "HTTP Client Connection Pooling",
+      "tags": [
+        "perf",
+        "httpx",
+        "http",
+        "client",
+        "connection-pool"
+      ],
+      "summary": "Reuse HTTP client instances to benefit from connection pooling.",
+      "content": "Creating new HTTP clients per request wastes resources. Use a shared client instance with connection pooling. Configure timeouts and limits appropriately. Use lifespan context to manage client lifecycle.",
+      "code_examples": [
+        {
+          "description": "Shared httpx client with lifespan",
+          "code": "from contextlib import asynccontextmanager\nfrom fastapi import FastAPI, Depends\nimport httpx\n\n@asynccontextmanager\nasync def lifespan(app: FastAPI):\n    # Startup: create client\n    app.state.http_client = httpx.AsyncClient(\n        timeout=30.0,\n        limits=httpx.Limits(\n            max_connections=100,\n            max_keepalive_connections=20\n        )\n    )\n    yield\n    # Shutdown: close client\n    await app.state.http_client.aclose()\n\napp = FastAPI(lifespan=lifespan)\n\nasync def get_http_client():\n    return app.state.http_client\n\n@app.get(\"/external\")\nasync def call_external(\n    client: httpx.AsyncClient = Depends(get_http_client)\n):\n    response = await client.get(\"https://api.example.com/data\")\n    return response.json()\n"
+        },
+        {
+          "description": "Configure timeouts and retries",
+          "code": "import httpx\nfrom httpx import Timeout, Limits\n\nclient = httpx.AsyncClient(\n    timeout=Timeout(\n        connect=5.0,      # Connection timeout\n        read=30.0,        # Read timeout\n        write=10.0,       # Write timeout\n        pool=5.0,         # Pool acquire timeout\n    ),\n    limits=Limits(\n        max_connections=100,\n        max_keepalive_connections=20,\n        keepalive_expiry=30.0,\n    ),\n    http2=True,  # Enable HTTP/2\n)\n"
+        }
+      ]
+    }
+  ]
+}

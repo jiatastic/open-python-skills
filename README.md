@@ -1,6 +1,6 @@
 # Open Python Skills CLI
 
-Command-line tool to install Python Backend Pro Max skill to different AI assistants (Cursor, Claude Code, Windsurf, Kiro, GitHub Copilot, Antigravity).
+Command-line tool to install open-python-skills (a Python backend best-practices skill) to different AI assistants (Cursor, Claude Code, Windsurf, Kiro, GitHub Copilot, Antigravity).
 
 ## Installation
 
@@ -56,7 +56,6 @@ your-project/
 │   ├── SKILL.md
 │   ├── scripts/
 │   ├── data/
-│   └── references/
 └── ...
 ```
 

@@ -1,0 +1,26 @@
+{
+  "source": "Curated project templates",
+  "version": "2026-01",
+  "description": "Project scaffolding and templates for Python backends",
+  "entries": [
+    {
+      "id": "template-domain-driven-structure",
+      "category": "template",
+      "title": "Domain-driven Project Structure",
+      "tags": [
+        "template",
+        "architecture",
+        "structure",
+        "fastapi"
+      ],
+      "summary": "Organize by domain/package to scale monoliths; keep routers/schemas/services together per domain.",
+      "content": "Prefer domain-driven structure for large apps: each domain package contains router/schemas/models/service/dependencies.",
+      "code_examples": [
+        {
+          "description": "Example structure",
+          "code": "src/\n  auth/\n    router.py\n    schemas.py\n    service.py\n    dependencies.py\n  users/\n    router.py\n    schemas.py\n    service.py\n"
+        }
+      ]
+    }
+  ]
+}

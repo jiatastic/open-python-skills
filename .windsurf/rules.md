@@ -1,7 +1,7 @@
-# Windsurf Rules - Python Backend Pro Max
+# Windsurf Rules - open-python-skills
 
 ## Skill Location
-The Python Backend Pro Max skill is located at `.shared/SKILL.md`.
+The open-python-skills skill is located at `.shared/SKILL.md`.
 
 ## When to Activate
 Activate this skill when working with:
@@ -15,27 +15,20 @@ Activate this skill when working with:
 
 ## Available Resources
 
-### Reference Documents
-Read these markdown files for patterns and examples:
-- `.shared/references/fastapi.md` - FastAPI best practices
-- `.shared/references/security.md` - Security patterns
-- `.shared/references/database.md` - Database operations
-- `.shared/references/upstash.md` - Redis/Upstash integration
-- `.shared/references/deslop.md` - Code cleanup guidelines
-- `.shared/references/api.md` - API design patterns
-- `.shared/references/perf.md` - Performance optimization
-- `.shared/references/template.md` - Project templates
-
 ### Search Scripts
 ```bash
-# Search reference documents
-python3 .shared/scripts/search.py "query" --domain fastapi
-
 # Search knowledge database
 python3 .shared/scripts/knowledge_db.py "query"
 
 # Get full entry
 python3 .shared/scripts/knowledge_db.py --get entry-id
+
+# List categories / tags
+python3 .shared/scripts/knowledge_db.py --list-categories
+python3 .shared/scripts/knowledge_db.py --list-tags
+
+# Stats
+python3 .shared/scripts/knowledge_db.py --stats
 ```
 
 ## Core Principles
