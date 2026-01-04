@@ -1,0 +1,94 @@
+{
+  "source": "Conventional Commits + custom patterns",
+  "version": "1.0.0",
+  "commit_types": {
+    "feat": {
+      "description": "A new feature",
+      "emoji": "✨",
+      "patterns": ["add", "new", "create", "implement", "introduce"]
+    },
+    "fix": {
+      "description": "A bug fix",
+      "emoji": "🐛",
+      "patterns": ["fix", "resolve", "correct", "patch", "repair"]
+    },
+    "refactor": {
+      "description": "Code change that neither fixes a bug nor adds a feature",
+      "emoji": "♻️",
+      "patterns": ["refactor", "restructure", "reorganize", "simplify", "clean"]
+    },
+    "docs": {
+      "description": "Documentation only changes",
+      "emoji": "📝",
+      "patterns": ["doc", "readme", "comment", "typo"]
+    },
+    "test": {
+      "description": "Adding or correcting tests",
+      "emoji": "✅",
+      "patterns": ["test", "spec", "coverage"]
+    },
+    "chore": {
+      "description": "Maintenance tasks",
+      "emoji": "🔧",
+      "patterns": ["chore", "update", "upgrade", "bump", "config"]
+    },
+    "style": {
+      "description": "Formatting, white-space, etc",
+      "emoji": "💄",
+      "patterns": ["style", "format", "lint", "prettier"]
+    },
+    "perf": {
+      "description": "Performance improvements",
+      "emoji": "⚡",
+      "patterns": ["perf", "optimize", "speed", "cache"]
+    },
+    "ci": {
+      "description": "CI/CD changes",
+      "emoji": "👷",
+      "patterns": ["ci", "workflow", "pipeline", "deploy"]
+    }
+  },
+  "scope_mappings": {
+    "src/api/": "api",
+    "src/models/": "models",
+    "src/services/": "services",
+    "src/utils/": "utils",
+    "src/components/": "components",
+    "tests/": "test",
+    "docs/": "docs",
+    "scripts/": "scripts",
+    ".github/": "ci",
+    "migrations/": "db"
+  },
+  "file_type_hints": {
+    ".md": "docs",
+    ".txt": "docs",
+    ".json": "chore",
+    ".yaml": "chore",
+    ".yml": "chore",
+    ".toml": "chore",
+    ".gitignore": "chore",
+    ".env": "chore",
+    "_test.py": "test",
+    "test_*.py": "test",
+    "*_spec.js": "test",
+    "*.spec.ts": "test"
+  },
+  "grouping_rules": {
+    "priority": ["test", "docs", "chore"],
+    "keep_together": [
+      ["*.py", "*_test.py"],
+      ["*.ts", "*.spec.ts"],
+      ["src/**", "tests/**"]
+    ],
+    "split_by_directory": true,
+    "max_files_per_commit": 10
+  },
+  "message_templates": {
+    "single_file_add": "{type}({scope}): add {filename}",
+    "single_file_modify": "{type}({scope}): update {filename}",
+    "single_file_delete": "{type}({scope}): remove {filename}",
+    "multi_file_same_dir": "{type}({scope}): {action} {description}",
+    "multi_file_mixed": "{type}: {description}"
+  }
+}
