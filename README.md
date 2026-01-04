@@ -1,15 +1,19 @@
 # Open Python Skills
 
-CLI tool to install AI coding skills to your projects. Currently includes **python-backend** skill for FastAPI, SQLAlchemy, Redis, security patterns.
+CLI tool to install AI coding skills to your projects. Currently includes:
+- **python-backend** - FastAPI, SQLAlchemy, Redis, security patterns
+- **commit-message** - Git commit message analysis and batch commit suggestions
 
 ## Quick Start
 
 ```bash
-# Install skill to your project (no pip install needed)
+# Install all skills to your project (no pip install needed)
 uvx open-python-skills init --cursor      # Cursor
 uvx open-python-skills init --claude      # Claude Code
 uvx open-python-skills init --windsurf    # Windsurf
-uvx open-python-skills init --all         # All IDE
+uvx open-python-skills init --kiro        # Kiro
+uvx open-python-skills init --copilot     # GitHub Copilot
+uvx open-python-skills init --all         # All IDEs
 ```
 
 ## Available Skills
@@ -17,6 +21,7 @@ uvx open-python-skills init --all         # All IDE
 | Skill | Description |
 |-------|-------------|
 | `python-backend` | FastAPI, SQLAlchemy, Redis, security, performance patterns |
+| `commit-message` | Analyze git changes and generate conventional commit messages |
 
 ## What It Does
 
@@ -25,28 +30,65 @@ Running `init` copies skill files to your project:
 ```
 your-project/
 ├── .shared/
-│   ├── SKILL.md              # Skill description for AI
-│   ├── data/                 # Knowledge databases
-│   │   └── *.json
-│   └── scripts/
-│       └── knowledge_db.py   # Search script
-├── .cursor/commands/         # (if --cursor)
+│   ├── python-backend/
+│   │   ├── SKILL.md
+│   │   ├── data/*.json
+│   │   └── scripts/knowledge_db.py
+│   └── commit-message/
+│       ├── SKILL.md
+│       ├── data/*.json
+│       └── scripts/analyze_changes.py
+├── .cursor/commands/     # (if --cursor)
+│   ├── kb-search.md
+│   └── commit-batch.md
 └── ...
 ```
 
-Your AI assistant can then search the knowledge base for patterns and best practices.
+## Skills Overview
 
-## Categories (python-backend)
+### python-backend
 
-| Category | Description |
-|----------|-------------|
-| `fastapi` | Project structure, async patterns, Pydantic |
-| `security` | JWT/OAuth2, password hashing, CORS |
-| `database` | SQLAlchemy, Alembic, connection pooling |
-| `upstash` | Redis caching, QStash jobs, rate limiting |
-| `performance` | Caching, async, profiling |
-| `api` | REST conventions, versioning |
-| `deslop` | AI code cleanup patterns |
+Searchable knowledge base for Python backend development.
+
+```bash
+# Search knowledge database
+python3 .shared/python-backend/scripts/knowledge_db.py "jwt authentication"
+
+# Filter by category
+python3 .shared/python-backend/scripts/knowledge_db.py "caching" --category upstash
+```
+
+**Categories:** `fastapi`, `security`, `database`, `upstash`, `performance`, `api`, `deslop`, `template`
+
+### commit-message
+
+Analyze git changes and generate context-aware commit messages.
+
+```bash
+# Analyze all changes
+python3 .shared/commit-message/scripts/analyze_changes.py --analyze
+
+# Get batch commit suggestions
+python3 .shared/commit-message/scripts/analyze_changes.py --batch
+
+# Generate message for specific files
+python3 .shared/commit-message/scripts/analyze_changes.py --generate "src/*.py"
+```
+
+**Features:**
+- Conventional commit format (`feat`, `fix`, `refactor`, `docs`, etc.)
+- Automatic grouping by directory/module
+- Batch commit suggestions for large changesets
+
+## CLI Commands
+
+```bash
+open-python-skills init [--cursor|--claude|--windsurf|--all]  # Install skills
+open-python-skills search "query"                              # Search knowledge
+open-python-skills get <entry-id>                              # Get full entry
+open-python-skills categories                                  # List categories
+open-python-skills stats                                       # Show statistics
+```
 
 ## Requirements
 
