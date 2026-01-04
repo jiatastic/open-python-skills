@@ -1,4 +1,4 @@
-# Open Python Skills CLI
+# Open Python Skills
 
 Command-line tool to install open-python-skills (a Python backend best-practices skill) to different AI assistants (Cursor, Claude Code, Windsurf, Kiro, GitHub Copilot, Antigravity).
 
