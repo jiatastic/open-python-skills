@@ -1,6 +1,6 @@
 [project]
 name = "open-python-skills"
-version = "0.1.0"
+version = "0.1.2"
 description = "AI skill for Python backend development - FastAPI, SQLAlchemy, Redis, security patterns"
 readme = "README.md"
 requires-python = ">=3.8"
