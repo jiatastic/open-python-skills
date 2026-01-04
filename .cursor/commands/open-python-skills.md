@@ -19,16 +19,13 @@ Search and use Python backend best practices from the knowledge base.
    python3 .shared/scripts/knowledge_db.py --get {{entry-id}}
    ```
 
-## Discover Categories / Tags
+## Available Categories
 
-```bash
-python3 .shared/scripts/knowledge_db.py --list-categories
-python3 .shared/scripts/knowledge_db.py --list-tags
-```
+Use `--list-categories` to discover all categories.
 
 ## Knowledge Database
 
-- `.shared/data/*.json` (multiple databases; loaded automatically)
+- `.shared/data/*.json` (multiple databases; incremental and searchable)
 
 ## Examples
 
