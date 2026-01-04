@@ -1,0 +1,124 @@
+{
+  "source": "Curated + common FastAPI security patterns",
+  "version": "2026-01",
+  "description": "Security and authentication patterns for Python/FastAPI backends",
+  "entries": [
+    {
+      "id": "security-password-hashing",
+      "category": "security",
+      "title": "Password Hashing (passlib + bcrypt)",
+      "tags": [
+        "security",
+        "password",
+        "hashing",
+        "bcrypt",
+        "passlib"
+      ],
+      "summary": "Never store plaintext passwords. Hash with bcrypt (via passlib). Verify on login.",
+      "content": "Use a one-way password hash (bcrypt). Store only the hash. On login, verify using the stored hash. Do not implement your own crypto.",
+      "code_examples": [
+        {
+          "description": "Hash + verify helpers",
+          "code": "from passlib.context import CryptContext\n\npwd_context = CryptContext(schemes=[\"bcrypt\"], deprecated=\"auto\")\n\ndef hash_password(password: str) -> str:\n    return pwd_context.hash(password)\n\ndef verify_password(password: str, password_hash: str) -> bool:\n    return pwd_context.verify(password, password_hash)\n"
+        }
+      ]
+    },
+    {
+      "id": "security-jwt-create-verify",
+      "category": "security",
+      "title": "JWT Create/Verify (python-jose)",
+      "tags": [
+        "security",
+        "jwt",
+        "auth",
+        "python-jose"
+      ],
+      "summary": "Issue short-lived access tokens and validate them on each request.",
+      "content": "Keep access tokens short-lived. Validate signature and required claims. Prefer rotating secrets/keys and add refresh tokens if needed.",
+      "code_examples": [
+        {
+          "description": "Create + decode JWT",
+          "code": "from datetime import datetime, timedelta, timezone\n\nfrom jose import JWTError, jwt\n\nJWT_ALG = \"HS256\"\nJWT_SECRET = \"change-me\"\n\ndef create_access_token(*, subject: str, expires_minutes: int = 15) -> str:\n    now = datetime.now(timezone.utc)\n    payload = {\n        \"sub\": subject,\n        \"iat\": int(now.timestamp()),\n        \"exp\": int((now + timedelta(minutes=expires_minutes)).timestamp()),\n    }\n    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)\n\ndef decode_access_token(token: str) -> dict:\n    try:\n        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])\n    except JWTError as e:\n        raise ValueError(\"Invalid token\") from e\n"
+        }
+      ]
+    },
+    {
+      "id": "security-fastapi-oauth2-bearer",
+      "category": "security",
+      "title": "FastAPI OAuth2 Bearer Dependency",
+      "tags": [
+        "security",
+        "fastapi",
+        "oauth2",
+        "bearer",
+        "depends"
+      ],
+      "summary": "Use OAuth2PasswordBearer to parse Authorization: Bearer <token>.",
+      "content": "Use FastAPI security dependencies to consistently extract auth credentials. Keep parsing/verification logic in dependencies.",
+      "code_examples": [
+        {
+          "description": "Bearer parsing + current user dependency",
+          "code": "from fastapi import Depends, HTTPException, status\nfrom fastapi.security import OAuth2PasswordBearer\n\noauth2_scheme = OAuth2PasswordBearer(tokenUrl=\"/auth/token\")\n\ndef get_current_user(token: str = Depends(oauth2_scheme)) -> dict:\n    try:\n        payload = decode_access_token(token)  # see: security-jwt-create-verify\n    except ValueError:\n        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=\"Invalid token\")\n    return {\"user_id\": payload[\"sub\"]}\n"
+        }
+      ]
+    },
+    {
+      "id": "security-api-key-header",
+      "category": "security",
+      "title": "API Key Auth via Header",
+      "tags": [
+        "security",
+        "api-key",
+        "fastapi",
+        "header"
+      ],
+      "summary": "Protect internal endpoints with an API key header dependency.",
+      "content": "Use a dedicated header (e.g. X-API-Key). Compare with a server-side secret. Return 401/403 on mismatch.",
+      "code_examples": [
+        {
+          "description": "API key dependency",
+          "code": "from fastapi import Depends, Header, HTTPException, status\n\nAPI_KEY = \"change-me\"\n\ndef require_api_key(x_api_key: str | None = Header(default=None, alias=\"X-API-Key\")) -> None:\n    if not x_api_key or x_api_key != API_KEY:\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=\"Invalid API key\")\n"
+        }
+      ]
+    },
+    {
+      "id": "security-cors",
+      "category": "security",
+      "title": "CORS Configuration (FastAPI)",
+      "tags": [
+        "security",
+        "cors",
+        "fastapi",
+        "middleware"
+      ],
+      "summary": "Lock CORS down to known origins; avoid permissive '*' in production.",
+      "content": "Set allowed origins explicitly. Restrict methods/headers. Keep credentials consistent with allowed origins.",
+      "code_examples": [
+        {
+          "description": "CORS middleware",
+          "code": "from fastapi import FastAPI\nfrom fastapi.middleware.cors import CORSMiddleware\n\napp = FastAPI()\n\napp.add_middleware(\n    CORSMiddleware,\n    allow_origins=[\"https://example.com\"],\n    allow_credentials=True,\n    allow_methods=[\"GET\", \"POST\"],\n    allow_headers=[\"Authorization\", \"Content-Type\"],\n)\n"
+        }
+      ]
+    },
+    {
+      "id": "security-hide-docs-nonpublic",
+      "category": "security",
+      "title": "Hide OpenAPI Docs by Default",
+      "tags": [
+        "security",
+        "docs",
+        "openapi",
+        "fastapi",
+        "environment"
+      ],
+      "summary": "Disable docs endpoints in production unless your API is explicitly public.",
+      "content": "Set openapi_url (and optionally docs_url/redoc_url) to None in production. Enable only on local/staging.",
+      "code_examples": [
+        {
+          "description": "Conditional docs",
+          "code": "from fastapi import FastAPI\n\nENV = \"production\"  # e.g., from env vars\n\napp = FastAPI(\n    title=\"My API\",\n    openapi_url=None if ENV == \"production\" else \"/openapi.json\",\n)\n"
+        }
+      ]
+    }
+  ]
+}
