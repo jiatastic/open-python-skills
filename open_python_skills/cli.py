@@ -36,15 +36,18 @@ SKILL_PATH = ".shared/SKILL.md"
 SKILL_DESCRIPTION = "Python backend development expertise for FastAPI, security, database, caching, and best practices"
 
 
-def get_package_data_path() -> Path:
-    """Get path to bundled data files in package."""
+AVAILABLE_SKILLS = ["python-backend", "commit-message"]
+
+
+def get_package_skill_path(skill_name: str = "python-backend") -> Path:
+    """Get path to bundled skill files in package."""
     try:
         # Python 3.9+
-        return Path(importlib_files("open_python_skills") / "data")
+        return Path(importlib_files("open_python_skills") / skill_name)
     except Exception:
         # Fallback for older Python
         import open_python_skills
-        return Path(open_python_skills.__file__).parent / "data"
+        return Path(open_python_skills.__file__).parent / skill_name
 
 
 def get_target_path() -> Path:
@@ -52,30 +55,38 @@ def get_target_path() -> Path:
     return Path.cwd()
 
 
-def copy_shared_files(target_path: Path) -> bool:
-    """Copy .shared files to target project."""
-    source_path = get_package_data_path()
+def copy_shared_files(target_path: Path, skills: list[str] = None) -> bool:
+    """Copy .shared files to target project for all skills."""
+    if skills is None:
+        skills = AVAILABLE_SKILLS
+
     dest_path = target_path / ".shared"
-    
-    if not source_path.exists():
-        print(f"ERROR: Package data not found at {source_path}")
-        return False
-    
-    # Create .shared directory
     dest_path.mkdir(parents=True, exist_ok=True)
-    
-    # Copy all files from package data
-    for item in source_path.iterdir():
-        dest_item = dest_path / item.name
-        if item.is_dir():
-            if dest_item.exists():
-                shutil.rmtree(dest_item)
-            shutil.copytree(item, dest_item)
-        else:
-            shutil.copy2(item, dest_item)
-    
-    print(f"OK: Copied skill files to {dest_path}")
-    return True
+
+    success = True
+    for skill_name in skills:
+        source_path = get_package_skill_path(skill_name)
+
+        if not source_path.exists():
+            print(f"WARNING: Skill '{skill_name}' not found at {source_path}")
+            continue
+
+        skill_dest = dest_path / skill_name
+        skill_dest.mkdir(parents=True, exist_ok=True)
+
+        # Copy all files from skill
+        for item in source_path.iterdir():
+            dest_item = skill_dest / item.name
+            if item.is_dir():
+                if dest_item.exists():
+                    shutil.rmtree(dest_item)
+                shutil.copytree(item, dest_item)
+            else:
+                shutil.copy2(item, dest_item)
+
+        print(f"OK: Copied {skill_name} to {skill_dest}")
+
+    return success
 
 
 def install_cursor(base_path: Path) -> bool:
@@ -83,117 +94,173 @@ def install_cursor(base_path: Path) -> bool:
     cursor_dir = base_path / ".cursor" / "commands"
     cursor_dir.mkdir(parents=True, exist_ok=True)
     
-    command_file = cursor_dir / f"{SKILL_NAME}.md"
-    
-    content = """# open-python-skills
+    # python-backend skill command
+    kb_command = cursor_dir / "kb-search.md"
+    kb_content = """# kb-search
 
-Search and use Python backend best practices from the knowledge base.
+Search Python backend best practices from the knowledge base.
 
 ## Instructions
 
 1. Search knowledge database:
    ```bash
-   python3 .shared/scripts/knowledge_db.py "{{query}}"
+   python3 .shared/python-backend/scripts/knowledge_db.py "{{query}}"
    ```
 
 2. Filter by category:
    ```bash
-   python3 .shared/scripts/knowledge_db.py "{{query}}" --category {{category}}
+   python3 .shared/python-backend/scripts/knowledge_db.py "{{query}}" --category {{category}}
    ```
 
 3. Get full entry with code examples:
    ```bash
-   python3 .shared/scripts/knowledge_db.py --get {{entry-id}}
+   python3 .shared/python-backend/scripts/knowledge_db.py --get {{entry-id}}
    ```
-
-## Available Categories
-
-Use `--list-categories` to discover all categories.
-
-## Knowledge Database
-
-- `.shared/data/*.json` (multiple databases; incremental and searchable)
 
 ## Examples
 
-- `/open-python-skills async routes`
-- `/open-python-skills jwt authentication`
-- `/open-python-skills pydantic validation`
-- `/open-python-skills database connection pooling`
+- `/kb-search async routes`
+- `/kb-search jwt authentication`
 """
+    kb_command.write_text(kb_content, encoding="utf-8")
     
-    command_file.write_text(content, encoding="utf-8")
-    print(f"OK: Installed to Cursor: {command_file}")
+    # commit-message skill command
+    commit_command = cursor_dir / "commit-batch.md"
+    commit_content = """# commit-batch
+
+Analyze git changes and suggest batch commits.
+
+## Instructions
+
+1. Analyze all changes:
+   ```bash
+   python3 .shared/commit-message/scripts/analyze_changes.py --analyze
+   ```
+
+2. Get batch commit suggestions:
+   ```bash
+   python3 .shared/commit-message/scripts/analyze_changes.py --batch
+   ```
+
+3. Generate message for specific files:
+   ```bash
+   python3 .shared/commit-message/scripts/analyze_changes.py --generate "*.py"
+   ```
+
+## Examples
+
+- `/commit-batch` - Suggest how to split changes into commits
+"""
+    commit_command.write_text(commit_content, encoding="utf-8")
+    
+    print(f"OK: Installed to Cursor: {cursor_dir}/")
     return True
 
 
 def install_claude(base_path: Path) -> bool:
     """Install skill to Claude Code."""
     claude_dir = base_path / ".claude"
-    claude_dir.mkdir(parents=True, exist_ok=True)
+    commands_dir = claude_dir / "commands"
+    commands_dir.mkdir(parents=True, exist_ok=True)
     
-    # Update settings.local.json
-    settings_file = claude_dir / "settings.local.json"
-    
-    settings = {
-        "skills": [
-            {
-                "name": SKILL_NAME,
-                "path": SKILL_PATH,
-                "description": SKILL_DESCRIPTION
-            }
-        ],
-        "commands": {
-            "kb-search": {
-                "description": "Search open-python-skills knowledge base",
-                "command": "python3 .shared/scripts/knowledge_db.py \"$QUERY\""
-            },
-            "kb-get": {
-                "description": "Get full entry by ID",
-                "command": "python3 .shared/scripts/knowledge_db.py --get \"$QUERY\""
-            },
-            "kb-categories": {
-                "description": "List categories",
-                "command": "python3 .shared/scripts/knowledge_db.py --list-categories"
-            }
-        },
-    }
-    
-    settings_file.write_text(json.dumps(settings, indent=2), encoding="utf-8")
-    
-    # Update commands.md
-    commands_file = claude_dir / "commands.md"
-    commands_content = """# Claude Code Commands
+    # Create .claude/CLAUDE.md - project memory/instructions
+    claude_md = claude_dir / "CLAUDE.md"
+    claude_md_content = f"""# {SKILL_NAME}
 
-## open-python-skills
+{SKILL_DESCRIPTION}
 
-### Available Commands
+## Available Skills
 
-#### Search Knowledge Database
+### 1. python-backend
+Searchable knowledge base for Python backend development.
+See @.shared/python-backend/SKILL.md
+
 ```bash
-# Search entries
-python3 .shared/scripts/knowledge_db.py "async routes"
-
-# Filter by category
-python3 .shared/scripts/knowledge_db.py "validation" --category pydantic
-
-# Get full entry with code
-python3 .shared/scripts/knowledge_db.py --get async-routes-io
-
-# List all categories
-python3 .shared/scripts/knowledge_db.py --list-categories
-
-# Show stats
-python3 .shared/scripts/knowledge_db.py --stats
+python3 .shared/python-backend/scripts/knowledge_db.py "query"
+python3 .shared/python-backend/scripts/knowledge_db.py --get <entry-id>
 ```
 
-### Knowledge Databases
+### 2. commit-message
+Analyze git changes and generate commit messages.
+See @.shared/commit-message/SKILL.md
 
-Stored in `.shared/data/*.json` and loaded automatically by `knowledge_db.py`.
+```bash
+python3 .shared/commit-message/scripts/analyze_changes.py --batch
+python3 .shared/commit-message/scripts/analyze_changes.py --analyze
+```
+
+## Commands
+
+- `/kb-search` - Search python-backend knowledge base
+- `/kb-get` - Get full entry by ID
+- `/commit-batch` - Suggest batch commits for current changes
+- `/commit-analyze` - Analyze git changes
 """
+    claude_md.write_text(claude_md_content, encoding="utf-8")
     
-    commands_file.write_text(commands_content, encoding="utf-8")
-    print(f"OK: Installed to Claude Code: {settings_file}, {commands_file}")
+    # Create .claude/commands/kb-search.md
+    kb_search = commands_dir / "kb-search.md"
+    kb_search_content = """---
+description: Search python-backend knowledge base
+argument-hint: [query]
+---
+
+Search the knowledge database for: $ARGUMENTS
+
+```bash
+python3 .shared/python-backend/scripts/knowledge_db.py "$ARGUMENTS"
+```
+
+If results are found, offer to get full details with `/kb-get <entry-id>`.
+"""
+    kb_search.write_text(kb_search_content, encoding="utf-8")
+    
+    # Create .claude/commands/kb-get.md
+    kb_get = commands_dir / "kb-get.md"
+    kb_get_content = """---
+description: Get full entry by ID from knowledge base
+argument-hint: [entry-id]
+---
+
+Get full details for entry: $ARGUMENTS
+
+```bash
+python3 .shared/python-backend/scripts/knowledge_db.py --get "$ARGUMENTS"
+```
+"""
+    kb_get.write_text(kb_get_content, encoding="utf-8")
+    
+    # Create .claude/commands/commit-batch.md
+    commit_batch = commands_dir / "commit-batch.md"
+    commit_batch_content = """---
+description: Suggest batch commits for current changes
+---
+
+Analyze git changes and suggest how to split into multiple commits:
+
+```bash
+python3 .shared/commit-message/scripts/analyze_changes.py --batch
+```
+
+Follow the suggested commit order to create clean, logical commits.
+"""
+    commit_batch.write_text(commit_batch_content, encoding="utf-8")
+    
+    # Create .claude/commands/commit-analyze.md
+    commit_analyze = commands_dir / "commit-analyze.md"
+    commit_analyze_content = """---
+description: Analyze git changes
+---
+
+Show all changed files with their status:
+
+```bash
+python3 .shared/commit-message/scripts/analyze_changes.py --analyze
+```
+"""
+    commit_analyze.write_text(commit_analyze_content, encoding="utf-8")
+    
+    print(f"OK: Installed to Claude Code: {claude_md}, {commands_dir}/")
     return True
 
 
@@ -235,7 +302,7 @@ python3 .shared/scripts/knowledge_db.py --list-categories
 
 ## Core Principles
 1. Async-first for I/O operations
-2. Use Pydantic for validation
+2. Use Pydantic for validations
 3. Dependency injection with Depends()
 4. Validate early, fail fast
 5. Security by default
@@ -310,7 +377,7 @@ This project uses the **open-python-skills** knowledge base for Python backend d
 
 ### Skill Location
 - Main skill file: `{SKILL_PATH}`
-- Knowledge database: `.shared/data/`
+- Knowledge database: `.shared/data/` (JSON files)
 - Search scripts: `.shared/scripts/`
 
 ### Search Commands
@@ -385,18 +452,20 @@ python3 .shared/scripts/knowledge_db.py --list-categories
 
 
 def load_all_databases() -> list:
-    """Load all JSON databases."""
+    """Load all JSON databases from python-backend skill."""
     entries = []
-    data_path = get_package_data_path() / "data"
+    
+    # Try package path first
+    data_path = get_package_skill_path("python-backend") / "data"
     
     if not data_path.exists():
         # Try local .shared path
-        data_path = Path.cwd() / ".shared" / "data"
-    
+        data_path = Path.cwd() / ".shared" / "python-backend" / "data"
+
     if not data_path.exists():
-        print(f"ERROR: Data directory not found")
+        print("ERROR: Data directory not found")
         return entries
-    
+
     for json_file in data_path.glob("*.json"):
         try:
             with open(json_file, encoding="utf-8") as f:
