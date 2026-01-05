@@ -1,0 +1,43 @@
+{
+  "source": "Excalidraw AI templates",
+  "version": "2026-01",
+  "description": "Templates for generating different types of diagrams",
+  "entries": [
+    {
+      "id": "template-flowchart-basic",
+      "category": "template",
+      "title": "Basic Flowchart Template",
+      "tags": [
+        "template",
+        "flowchart",
+        "diagram"
+      ],
+      "summary": "Generate basic flowcharts with rectangles, diamonds, and arrows.",
+      "content": "Supports sequential process flows with decision points and connections.",
+      "code_examples": [
+        {
+          "description": "Example usage",
+          "code": "python3 scripts/excalidraw_generator.py \"Start -> Process -> End\" --type flowchart"
+        }
+      ]
+    },
+    {
+      "id": "template-architecture-basic",
+      "category": "template",
+      "title": "Basic Architecture Template",
+      "tags": [
+        "template",
+        "architecture",
+        "system-design"
+      ],
+      "summary": "Generate system architecture diagrams with layered components.",
+      "content": "Supports frontend, backend, and database layer visualization.",
+      "code_examples": [
+        {
+          "description": "Example usage",
+          "code": "python3 scripts/excalidraw_generator.py \"Frontend, API, Database\" --type architecture"
+        }
+      ]
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 CLI tool to install AI coding skills to your projects. Currently includes:
 - **python-backend** - FastAPI, SQLAlchemy, Redis, security patterns
 - **commit-message** - Git commit message analysis and batch commit suggestions
+- **excalidraw-ai** - AI-powered Excalidraw diagram generator from text descriptions
 
 ## Quick Start
 
@@ -22,6 +23,7 @@ uvx open-python-skills init --all         # All IDEs
 |-------|-------------|
 | `python-backend` | FastAPI, SQLAlchemy, Redis, security, performance patterns |
 | `commit-message` | Analyze git changes and generate conventional commit messages |
+| `excalidraw-ai` | Generate Excalidraw diagrams from natural language descriptions |
 
 ## What It Does
 
@@ -38,9 +40,14 @@ your-project/
 │       ├── SKILL.md
 │       ├── data/*.json
 │       └── scripts/analyze_changes.py
+│   └── excalidraw-ai/
+│       ├── SKILL.md
+│       ├── data/*.json
+│       └── scripts/excalidraw_generator.py
 ├── .cursor/commands/     # (if --cursor)
 │   ├── kb-search.md
 │   └── commit-batch.md
+│   └── excalidraw.md
 └── ...
 ```
 
@@ -79,6 +86,23 @@ python3 .shared/commit-message/scripts/analyze_changes.py --generate "src/*.py"
 - Conventional commit format (`feat`, `fix`, `refactor`, `docs`, etc.)
 - Automatic grouping by directory/module
 - Batch commit suggestions for large changesets
+
+### excalidraw-ai
+
+Generate Excalidraw diagrams from natural language descriptions.
+
+```bash
+# Generate flowchart
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "User Login -> Auth -> Access Data" --type flowchart
+
+# Generate architecture diagram
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "API Gateway -> Microservice -> Database" --type architecture
+
+# Generate backend architecture from a Python project (context-aware)
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type architecture --output backend_arch.json
+```
+
+**Types:** `flowchart`, `architecture`, `mindmap`
 
 ## CLI Commands
 

@@ -19,16 +19,15 @@ Usage:
 
 import argparse
 import json
-import os
 import shutil
 import sys
 from pathlib import Path
-from importlib import resources
 
 try:
     from importlib.resources import files as importlib_files
 except ImportError:
-    from importlib_resources import files as importlib_files
+    # Python 3.8 fallback. This optional dependency is only needed on 3.8.
+    from importlib_resources import files as importlib_files  # type: ignore[import-not-found]
 
 
 SKILL_NAME = "open-python-skills"
@@ -36,7 +35,7 @@ SKILL_PATH = ".shared/SKILL.md"
 SKILL_DESCRIPTION = "Python backend development expertise for FastAPI, security, database, caching, and best practices"
 
 
-AVAILABLE_SKILLS = ["python-backend", "commit-message"]
+AVAILABLE_SKILLS = ["python-backend", "commit-message", "excalidraw-ai"]
 
 
 def get_package_skill_path(skill_name: str = "python-backend") -> Path:
@@ -45,9 +44,13 @@ def get_package_skill_path(skill_name: str = "python-backend") -> Path:
         # Python 3.9+
         return Path(importlib_files("open_python_skills") / skill_name)
     except Exception:
-        # Fallback for older Python
-        import open_python_skills
-        return Path(open_python_skills.__file__).parent / skill_name
+        # Fallback for older Python or running from source
+        try:
+            import open_python_skills
+            return Path(open_python_skills.__file__).parent / skill_name
+        except ImportError:
+            # Running from source directly without package install
+            return Path(__file__).parent / skill_name
 
 
 def get_target_path() -> Path:
@@ -153,6 +156,31 @@ Analyze git changes and suggest batch commits.
 """
     commit_command.write_text(commit_content, encoding="utf-8")
     
+    # excalidraw skill command
+    excalidraw_command = cursor_dir / "excalidraw.md"
+    excalidraw_content = """# excalidraw
+
+Generate Excalidraw diagram from text.
+
+## Instructions
+
+1. Generate diagram:
+   ```bash
+   python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "description" --type flowchart
+   ```
+
+2. Generate backend architecture from the current Python project:
+   ```bash
+   python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type architecture --output diagram_architecture.json
+   ```
+
+## Examples
+
+- `/excalidraw "User login flow" --type flowchart`
+- `/excalidraw --project . --type architecture`
+"""
+    excalidraw_command.write_text(excalidraw_content, encoding="utf-8")
+    
     print(f"OK: Installed to Cursor: {cursor_dir}/")
     return True
 
@@ -189,12 +217,21 @@ python3 .shared/commit-message/scripts/analyze_changes.py --batch
 python3 .shared/commit-message/scripts/analyze_changes.py --analyze
 ```
 
+### 3. excalidraw-ai
+Generate diagrams from text.
+See @.shared/excalidraw-ai/SKILL.md
+
+```bash
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "description"
+```
+
 ## Commands
 
 - `/kb-search` - Search python-backend knowledge base
 - `/kb-get` - Get full entry by ID
 - `/commit-batch` - Suggest batch commits for current changes
 - `/commit-analyze` - Analyze git changes
+- `/excalidraw` - Generate diagram
 """
     claude_md.write_text(claude_md_content, encoding="utf-8")
     
@@ -259,6 +296,21 @@ python3 .shared/commit-message/scripts/analyze_changes.py --analyze
 ```
 """
     commit_analyze.write_text(commit_analyze_content, encoding="utf-8")
+    
+    # Create .claude/commands/excalidraw.md
+    excalidraw_cmd = commands_dir / "excalidraw.md"
+    excalidraw_content = """---
+description: Generate Excalidraw diagram
+argument-hint: [description]
+---
+
+Generate diagram: $ARGUMENTS
+
+```bash
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "$ARGUMENTS"
+```
+"""
+    excalidraw_cmd.write_text(excalidraw_content, encoding="utf-8")
     
     print(f"OK: Installed to Claude Code: {claude_md}, {commands_dir}/")
     return True
@@ -573,7 +625,7 @@ def cmd_stats() -> None:
     print(f"Total entries: {len(entries)}")
     print(f"Categories: {len(categories)}")
     print(f"Unique tags: {len(tags)}")
-    print(f"\nBy category:")
+    print("\nBy category:")
     for cat, count in sorted(categories.items(), key=lambda x: -x[1]):
         print(f"  {cat}: {count}")
 
