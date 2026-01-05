@@ -41,16 +41,10 @@ AVAILABLE_SKILLS = ["python-backend", "commit-message", "excalidraw-ai"]
 def get_package_skill_path(skill_name: str = "python-backend") -> Path:
     """Get path to bundled skill files in package."""
     try:
-        # Python 3.9+
         return Path(importlib_files("open_python_skills") / skill_name)
-    except Exception:
-        # Fallback for older Python or running from source
-        try:
-            import open_python_skills
-            return Path(open_python_skills.__file__).parent / skill_name
-        except ImportError:
-            # Running from source directly without package install
-            return Path(__file__).parent / skill_name
+    except TypeError:
+        # importlib_files may fail if package not properly installed
+        return Path(__file__).parent / skill_name
 
 
 def get_target_path() -> Path:
@@ -58,7 +52,7 @@ def get_target_path() -> Path:
     return Path.cwd()
 
 
-def copy_shared_files(target_path: Path, skills: list[str] = None) -> bool:
+def copy_shared_files(target_path: Path, skills: list[str] | None = None) -> bool:
     """Copy .shared files to target project for all skills."""
     if skills is None:
         skills = AVAILABLE_SKILLS
@@ -524,13 +518,13 @@ def load_all_databases() -> list:
                 data = json.load(f)
                 if "entries" in data:
                     entries.extend(data["entries"])
-        except Exception as e:
-            print(f"Warning: Failed to load {json_file}: {e}")
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"Warning: Failed to load {json_file}: {e}", file=sys.stderr)
     
     return entries
 
 
-def cmd_search(query: str, category: str = None) -> None:
+def cmd_search(query: str, category: str | None = None) -> None:
     """Search knowledge database."""
     entries = load_all_databases()
     
@@ -745,11 +739,11 @@ Examples:
             try:
                 if installer_func(base_path):
                     success_count += 1
-            except Exception as e:
-                print(f"ERROR: Failed to install to {name}: {e}")
+            except OSError as e:
+                print(f"ERROR: Failed to install to {name}: {e}", file=sys.stderr)
         
         print(f"\n{'='*60}")
-        print(f"✅ Successfully installed to {success_count}/{total_count} IDE(s)")
+        print(f"Successfully installed to {success_count}/{total_count} IDE(s)")
         print(f"{'='*60}\n")
         print("Next steps:")
         print("  1. Open your project in your AI-powered IDE")
