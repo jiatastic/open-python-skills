@@ -9,7 +9,7 @@ Generate Excalidraw diagram from text.
    python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "description" --type flowchart
    ```
 
-2. Generate a backend architecture diagram from the current Python project:
+2. Generate backend architecture from the current Python project:
    ```bash
    python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type architecture --output diagram_architecture.json
    ```
