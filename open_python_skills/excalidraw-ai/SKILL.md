@@ -1,70 +1,128 @@
 ---
 name: excalidraw-ai
 description: >
-  AI-powered Excalidraw diagram generator that converts natural language descriptions 
-  into professional diagrams. Use when: (1) Creating flowcharts from text descriptions,
-  (2) Generating architecture diagrams, (3) Building mind maps, (4) Designing system workflows,
-  (5) Creating technical documentation visuals, or (6) Converting complex ideas into visual diagrams.
+  AI-powered professional Excalidraw diagram generator with a rich component library.
+  Use when: (1) Creating flowcharts from text, (2) Generating architecture diagrams
+  with a professional look, (3) Building mind maps, (4) Designing system workflows,
+  (5) Creating technical documentation visuals, or (6) Converting complex ideas into visuals.
+  Features automatic component type detection, rich color palettes, and library icon support.
 ---
 
 # excalidraw-ai
 
-AI驱动的Excalidraw图表生成器，将自然语言描述转换为专业图表。
+AI-powered professional Excalidraw diagram generator with intelligent component detection and extensive library icon support.
 
-## 使用方法
+## ✨ Features
+
+- **🎨 Professional color palettes** - Each component type has a unique color scheme (e.g., Database = purple, Cache = red, Queue = green, etc.)
+- **🧠 Smart Component Recognition** - Automatically detects the type of each component (e.g., "Redis" → cache, "PostgreSQL" → database)
+- **📚 Library Icon Support** - Uses professional icons from `.excalidrawlib` files
+- **🏗️ Multi-layer Architecture Layouts** - Automatically arranges components in architectural layers (Client → Gateway → Service → Database)
+- **🏷️ Type Badges** - Optionally displays component type badges (e.g., "🗄️ DB", "⚡ Cache")
+
+## Usage
 
 ```bash
-# 生成基本流程图
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "用户登录 -> 验证 -> 访问数据" --type flowchart
+# 🌟 Professional architecture diagram (auto-detects and colors components)
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
+  "Load Balancer -> API Gateway -> Redis Cache -> PostgreSQL" \
+  --type architecture --style pro
 
-# 生成架构图
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "API Gateway -> 微服务 -> 数据库" --type architecture
+# Complete system architecture
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
+  "CDN -> Nginx -> FastAPI Service -> Kafka Queue -> MongoDB" \
+  --type architecture --style pro --output system_arch.json
 
-# 生成思维导图
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "Python开发：FastAPI，SQLAlchemy，Redis" --type mindmap
+# Basic flowchart
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
+  "User Login -> Verify -> Access Data" --type flowchart
 
-# ✅ Python 项目（上下文感知）自动生成后端架构图
-# 在项目根目录执行（会扫描 *.py 并基于结构生成图）
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type architecture --output backend_arch.json
+# Hand-drawn style architecture diagram
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
+  "API Gateway -> Microservice -> Database" --type architecture --theme sketchy
 
-# （可选）如果安装了 Astral ty，则附带类型检查元信息（不会影响图生成）
-# uv tool install ty@latest
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type architecture --use-ty
+# Mind map
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
+  "Python Development: FastAPI, SQLAlchemy, Redis, Celery" --type mindmap
 
-# 使用自定义样式
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "系统架构" --theme modern --output diagram.json
+# ✅ Auto-generate backend architecture from a Python project
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
+  --project . --type architecture --style pro --output backend_arch.json
 
-# 交互式生成
+# See supported component types
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --list-types
+
+# Interactive mode
 python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --interactive
 ```
 
-## 支持的图表类型
+## 🎨 Supported Component Types & Colors
 
-- `flowchart` - 流程图
-- `architecture` - 架构图  
-- `mindmap` - 思维导图
+| Component Type   | Keywords                              | Border Color | Fill Color |
+|------------------|---------------------------------------|--------------|------------|
+| **Database**     | database, postgres, mysql, mongodb    | Purple       | Light purple |
+| **Cache**        | redis, cache, memcached               | Red          | Light red    |
+| **Message Queue**| kafka, rabbitmq, queue, sqs           | Green        | Light green  |
+| **Load Balancer**| load balancer, nginx, elb             | Teal         | Light teal   |
+| **Gateway**      | gateway, kong, apigee                 | Gray         | Light gray   |
+| **CDN**          | cdn, cloudfront, edge                 | Sky Blue     | Light blue   |
+| **Auth**         | auth, iam, oauth                      | Rose         | Light pink   |
+| **Storage**      | s3, storage, blob                     | Amber        | Light yellow |
+| **Service**      | service, api, backend                 | Blue         | Light blue   |
+| **Container**    | docker, kubernetes, k8s               | Blue         | Light blue   |
+| **Function**     | lambda, function, serverless          | Orange       | Light orange |
+| **Monitoring**   | prometheus, grafana, monitor          | Lime         | Light green  |
 
-> 注：`sequence` / `network` 目前尚未实现（后续可扩展模板）。
+## Supported Diagram Types
 
-## 可用主题
+- `flowchart` - Flowcharts
+- `architecture` - Architecture diagrams (with `--style pro` for advanced coloring)
+- `mindmap` - Mind maps
 
-- `modern` - 现代简洁风格
-- `sketchy` - 手绘风格
-- `technical` - 技术文档风格
-- `colorful` - 多彩风格
+## Themes
 
-## 输出格式
+- `modern` - Minimalistic modern style
+- `sketchy` - Hand-drawn look
+- `technical` - Documentation/technical style
+- `colorful` - Vivid, colorful style
 
-生成的图表可以：
-- 直接导入到 Excalidraw.com
-- 通过API集成到Web应用
-- 转换为PNG/SVG图片
-- 嵌入到Markdown文档
+## Style Options
 
-## 核心功能
+- `pro` - Professional palette, unique colors per component type (default)
+- `basic` - Theme-based uniform coloring
 
-1. **文本生成图表** - 从自然语言描述生成流程图/架构图/思维导图
-2. **Python 项目分析（AST）** - 扫描代码结构并生成后端架构草图（`--project`）
-3. **可选 ty 元信息** - 结合 Astral `ty` 输出类型检查摘要（`--use-ty`）
-4. **样式主题** - 多种视觉风格
-5. **交互编辑** - 支持迭代优化
+## Output
+
+Generated diagrams can be:
+- Imported directly into [Excalidraw.com](https://excalidraw.com)
+- Integrated into web apps via API
+- Exported as PNG/SVG images
+- Embedded in Markdown documentation
+
+## 📚 Library Support
+
+You can load component icons from `.excalidrawlib` files:
+
+- `software-architecture.excalidrawlib` - Software architecture icons
+- `system-design.excalidrawlib` - System design elements
+- `system-design-template.excalidrawlib` - System design templates
+- `drwnio.excalidrawlib` - Draw.io style icon set
+- `aws-architecture-icons.excalidrawlib` - AWS architecture icons
+
+## Key Capabilities
+
+1. **Text-to-Diagram** - Generate professional diagrams from natural language descriptions
+2. **Intelligent Component Detection** - Auto-detect and classify components and style them accordingly
+3. **Professional Color Schemes** - Rich palettes based on component type
+4. **Python Project Analysis** - Scan code to generate backend architecture diagrams (`--project`)
+5. **Optional ty Metadata** - Integrate summary output from Astral `ty` type checking (`--use-ty`)
+6. **Multiple Visual Themes** - Choose from modern, sketchy, technical, or colorful themes
+7. **Interactive Editing** - Supports iterative, interactive editing
+
+## Example Output
+
+```
+✅ Diagram generated: diagram_architecture.json
+📊 Elements: 24
+🌐 Import it at https://excalidraw.com
+```
