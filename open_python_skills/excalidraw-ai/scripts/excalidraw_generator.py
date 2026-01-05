@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
 """
 Excalidraw AI Diagram Generator
-Diagram generator that outputs Excalidraw JSON.
+Professional diagram generator that outputs Excalidraw JSON with library components.
+
+Features:
+- Uses professional icons from .excalidrawlib files
+- Smart component type detection
+- Rich color palettes per component type
+- Multiple layout algorithms
 
 Usage:
     python3 scripts/excalidraw_generator.py "User login -> Verify -> Access data" --type flowchart
     python3 scripts/excalidraw_generator.py "API Gateway -> Service -> Database" --type architecture
     python3 scripts/excalidraw_generator.py --project . --type architecture
     python3 scripts/excalidraw_generator.py --interactive
+    python3 scripts/excalidraw_generator.py "Load Balancer -> API Gateway -> Redis Cache -> PostgreSQL" --type architecture --style pro
 """
 
 import argparse
@@ -15,11 +22,13 @@ import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Tuple
 import uuid
 import re
+import math
 
 from analyze_python_project import analyze_python_project_to_graph
+from library_manager import LibraryManager, get_component_colors, COMPONENT_COLORS
 
 
 @dataclass
@@ -229,116 +238,251 @@ class FlowchartTemplate(DiagramTemplate):
 
 
 class ArchitectureTemplate(DiagramTemplate):
-    """Architecture diagram template."""
+    """Architecture diagram template with professional component icons."""
     
-    def __init__(self):
+    # Comprehensive layer classification
+    LAYER_KEYWORDS = {
+        "client": ["client", "mobile", "ios", "android", "browser", "user", "customer"],
+        "edge": ["cdn", "edge", "cloudfront", "akamai", "fastly"],
+        "gateway": ["gateway", "api gateway", "kong", "apigee", "ingress", "proxy", "nginx"],
+        "load_balancer": ["load balancer", "lb", "elb", "alb", "nlb", "haproxy"],
+        "service": ["service", "api", "backend", "server", "app", "microservice"],
+        "cache": ["cache", "redis", "memcached", "elasticache"],
+        "queue": ["queue", "message", "kafka", "rabbitmq", "sqs", "pubsub", "mq"],
+        "database": ["database", "db", "postgres", "mysql", "mongodb", "sql", "dynamo"],
+        "storage": ["storage", "s3", "blob", "file", "object", "bucket"],
+        "auth": ["auth", "iam", "identity", "oauth", "cognito", "keycloak"],
+        "monitoring": ["monitor", "log", "metric", "prometheus", "grafana", "datadog"],
+    }
+    
+    LAYER_ORDER = ["client", "edge", "gateway", "load_balancer", "service", "cache", "queue", "database", "storage", "auth", "monitoring"]
+    
+    def __init__(self, library_manager: Optional[LibraryManager] = None):
         super().__init__("architecture")
+        self.library_manager = library_manager or LibraryManager()
+        self.use_library_icons = True  # Flag to enable/disable library icons
     
-    def generate_elements(self, description: str, theme: str = "modern") -> List[ExcalidrawElement]:
-        """Generate architecture diagram elements from a text description."""
+    def generate_elements(
+        self, 
+        description: str, 
+        theme: str = "modern",
+        style: str = "pro"  # "pro" uses rich colors, "basic" uses theme colors
+    ) -> List[ExcalidrawElement]:
+        """Generate professional architecture diagram elements."""
         elements = []
         components = self._parse_architecture_description(description)
         
         x_start = 100
         y_start = 100
-        component_width = 160
-        component_height = 80
-        layer_spacing = 200
-        component_spacing = 250
+        component_width = 180
+        component_height = 100
+        layer_spacing = 180
+        component_spacing = 240
         
-        themes = {
-            "modern": {"stroke": "#1971c2", "bg": "#e7f5ff"},
-            "sketchy": {"stroke": "#495057", "bg": "#f8f9fa"},
-            "technical": {"stroke": "#2f9e44", "bg": "#ebfbee"},
-            "colorful": {"stroke": "#e03131", "bg": "#fff5f5"}
-        }
+        # Organize into layers for better visual hierarchy
+        layers = self._organize_by_layers_enhanced(components)
         
-        theme_colors = themes.get(theme, themes["modern"])
-        layers = self._organize_by_layers(components)
+        component_elements: Dict[str, ExcalidrawElement] = {}
         
-        component_elements = {}
+        # Calculate max layer width for centering
+        max_layer_size = max((len(layer_items) for layer_items in layers.values()), default=1)
         
-        for layer_idx, layer in enumerate(layers):
-            for comp_idx, component in enumerate(layer):
-                layer_width = len(layer) * component_spacing
-                max_layer_size = max(len(layer_items) for layer_items in layers)
-                x_offset = (max_layer_size * component_spacing - layer_width) / 2
-                
+        layer_idx = 0
+        for layer_name in self.LAYER_ORDER:
+            if layer_name not in layers:
+                continue
+            
+            layer_components = layers[layer_name]
+            layer_width = len(layer_components) * component_spacing
+            x_offset = (max_layer_size * component_spacing - layer_width) / 2
+            
+            for comp_idx, component in enumerate(layer_components):
                 x = x_start + x_offset + comp_idx * component_spacing
                 y = y_start + layer_idx * layer_spacing
                 
-                element_type = self._determine_component_type(component)
+                comp_type = self._classify_component(component)
                 element_id = str(uuid.uuid4())
                 
-                if element_type == "database":
-                    node = Ellipse(
-                        id=element_id,
-                        x=x,
-                        y=y,
-                        width=component_width,
-                        height=component_height,
-                        strokeColor=theme_colors["stroke"],
-                        backgroundColor=theme_colors["bg"],
-                        roughness=2 if theme == "sketchy" else 1,
-                        strokeWidth=2
-                    )
+                # Get colors based on component type
+                if style == "pro":
+                    colors = get_component_colors(comp_type)
+                    stroke_color = colors["stroke"]
+                    bg_color = colors["bg"]
                 else:
-                    node = Rectangle(
-                        id=element_id,
-                        x=x,
-                        y=y,
-                        width=component_width,
-                        height=component_height,
-                        strokeColor=theme_colors["stroke"],
-                        backgroundColor=theme_colors["bg"],
-                        roughness=2 if theme == "sketchy" else 1,
-                        strokeWidth=2
-                    )
+                    themes = {
+                        "modern": {"stroke": "#1971c2", "bg": "#e7f5ff"},
+                        "sketchy": {"stroke": "#495057", "bg": "#f8f9fa"},
+                        "technical": {"stroke": "#2f9e44", "bg": "#ebfbee"},
+                        "colorful": {"stroke": "#e03131", "bg": "#fff5f5"}
+                    }
+                    theme_colors = themes.get(theme, themes["modern"])
+                    stroke_color = theme_colors["stroke"]
+                    bg_color = theme_colors["bg"]
+                
+                # Create the shape based on component type
+                node = self._create_component_shape(
+                    element_id, x, y, component_width, component_height,
+                    comp_type, stroke_color, bg_color, theme
+                )
                 
                 elements.append(node)
                 component_elements[component] = node
                 
-                text_id = str(uuid.uuid4())
-                text = Text(
-                    id=text_id,
-                    x=x + 10,
-                    y=y + component_height / 2 - 10,
-                    width=component_width - 20,
-                    height=20,
-                    text=component,
-                    fontSize=16,
-                    textAlign="center",
-                    verticalAlign="middle",
-                    strokeColor=theme_colors["stroke"],
-                    backgroundColor="transparent",
-                    fontFamily=3 if theme == "sketchy" else 1
+                # Add label
+                text_el = self._create_label(
+                    component, x, y, component_width, component_height,
+                    stroke_color, theme
                 )
+                elements.append(text_el)
                 
-                text.x = x + (component_width - len(component)*8)/2
-                elements.append(text)
+                # Add type badge (small text showing component type)
+                if style == "pro":
+                    badge = self._create_type_badge(
+                        comp_type, x, y, component_width, stroke_color
+                    )
+                    if badge:
+                        elements.append(badge)
                 
                 node.groupIds = [element_id]
-                text.groupIds = [element_id]
+                text_el.groupIds = [element_id]
+            
+            layer_idx += 1
 
+        # Add arrows for flow
         if "->" in description or "→" in description:
-            # Support multiple flows separated by "|" (best-effort).
             flows = [f.strip() for f in description.split("|") if f.strip()]
+            arrow_color = "#64748b"  # Neutral gray for arrows
             for flow in flows:
-                self._add_arrows_for_flow(flow, component_elements, elements, theme_colors["stroke"])
+                self._add_arrows_for_flow(flow, component_elements, elements, arrow_color)
 
         return elements
-
-    def generate_elements_from_graph(self, graph: Dict[str, Any], theme: str = "modern") -> List[ExcalidrawElement]:
-        """Generate architecture diagram elements from a structured graph (nodes + edges)."""
-        elements: List[ExcalidrawElement] = []
-
-        themes = {
-            "modern": {"stroke": "#1971c2", "bg": "#e7f5ff", "line": "#1971c2"},
-            "sketchy": {"stroke": "#495057", "bg": "#f8f9fa", "line": "#868e96"},
-            "technical": {"stroke": "#2f9e44", "bg": "#ebfbee", "line": "#2f9e44"},
-            "colorful": {"stroke": "#e03131", "bg": "#fff5f5", "line": "#e03131"},
+    
+    def _create_component_shape(
+        self, element_id: str, x: float, y: float, 
+        width: float, height: float,
+        comp_type: str, stroke_color: str, bg_color: str, theme: str
+    ) -> ExcalidrawElement:
+        """Create appropriate shape for component type."""
+        roughness = 2 if theme == "sketchy" else 0
+        fill_style = "hachure" if theme == "sketchy" else "solid"
+        
+        # Use different shapes for different component types
+        if comp_type in {"database", "relational_db", "document_db", "graph_db", "columnar_db"}:
+            # Cylinder-like shape (ellipse for simplicity)
+            return Ellipse(
+                id=element_id, x=x, y=y, width=width, height=height,
+                strokeColor=stroke_color, backgroundColor=bg_color,
+                roughness=roughness, strokeWidth=2, fillStyle=fill_style
+            )
+        elif comp_type in {"cache"}:
+            # Diamond for cache
+            return Diamond(
+                id=element_id, x=x, y=y, width=width, height=height,
+                strokeColor=stroke_color, backgroundColor=bg_color,
+                roughness=roughness, strokeWidth=2, fillStyle=fill_style
+            )
+        else:
+            # Rectangle for most services
+            return Rectangle(
+                id=element_id, x=x, y=y, width=width, height=height,
+                strokeColor=stroke_color, backgroundColor=bg_color,
+                roughness=roughness, strokeWidth=2, fillStyle=fill_style
+            )
+    
+    def _create_label(
+        self, text: str, x: float, y: float,
+        width: float, height: float, stroke_color: str, theme: str
+    ) -> Text:
+        """Create centered label for component."""
+        font_family = 3 if theme == "sketchy" else 1
+        font_size = 16 if len(text) < 20 else 14
+        
+        # Center the text
+        text_width = len(text) * (font_size * 0.6)
+        text_x = x + (width - text_width) / 2
+        text_y = y + height / 2 - font_size / 2
+        
+        return Text(
+            id=str(uuid.uuid4()),
+            x=text_x, y=text_y,
+            width=width - 20, height=font_size + 4,
+            text=text, fontSize=font_size,
+            textAlign="center", verticalAlign="middle",
+            strokeColor=stroke_color, backgroundColor="transparent",
+            fontFamily=font_family
+        )
+    
+    def _create_type_badge(
+        self, comp_type: str, x: float, y: float, 
+        width: float, stroke_color: str
+    ) -> Optional[Text]:
+        """Create a small type indicator badge."""
+        type_labels = {
+            "database": "DB",
+            "relational_db": "SQL",
+            "document_db": "NoSQL",
+            "graph_db": "Graph",
+            "cache": "Cache",
+            "load_balancer": "LB",
+            "gateway": "Gateway",
+            "message_queue": "Queue",
+            "cdn": "CDN",
+            "auth_iam": "Auth",
+            "object_storage": "Storage",
+            "container": "Container",
+            "function": "Lambda",
+            "monitoring": "Monitor",
         }
-        theme_colors = themes.get(theme, themes["modern"])
+        
+        label = type_labels.get(comp_type)
+        if not label:
+            return None
+        
+        return Text(
+            id=str(uuid.uuid4()),
+            x=x + 5, y=y + 5,
+            width=80, height=14,
+            text=label, fontSize=11,
+            textAlign="left", verticalAlign="top",
+            strokeColor=stroke_color, backgroundColor="transparent",
+            fontFamily=1, opacity=70
+        )
+    
+    def _classify_component(self, component: str) -> str:
+        """Classify component into a type for coloring."""
+        comp_lower = component.lower()
+        
+        for comp_type, keywords in self.library_manager.COMPONENT_KEYWORDS.items():
+            for keyword in keywords:
+                if keyword in comp_lower:
+                    return comp_type
+        
+        return "service"
+    
+    def _organize_by_layers_enhanced(self, components: List[str]) -> Dict[str, List[str]]:
+        """Organize components by architectural layers."""
+        layers: Dict[str, List[str]] = {}
+        
+        for component in components:
+            comp_lower = component.lower()
+            assigned = False
+            
+            for layer_name, keywords in self.LAYER_KEYWORDS.items():
+                if any(kw in comp_lower for kw in keywords):
+                    layers.setdefault(layer_name, []).append(component)
+                    assigned = True
+                    break
+            
+            if not assigned:
+                layers.setdefault("service", []).append(component)
+        
+        return layers
+
+    def generate_elements_from_graph(
+        self, graph: Dict[str, Any], theme: str = "modern", style: str = "pro"
+    ) -> List[ExcalidrawElement]:
+        """Generate professional architecture diagram from a structured graph (nodes + edges)."""
+        elements: List[ExcalidrawElement] = []
 
         nodes = graph.get("nodes", [])
         edges = graph.get("edges", [])
@@ -346,78 +490,101 @@ class ArchitectureTemplate(DiagramTemplate):
         x_start = 100
         y_start = 100
         w = 220
-        h = 90
-        layer_spacing = 180
-        node_spacing = 260
+        h = 80
+        layer_spacing = 160
+        node_spacing = 280
 
         def layer_index(layer: str) -> int:
             order = ["external", "edge", "api", "service", "data", "infra"]
             return order.index(layer) if layer in order else 99
 
+        # Build parent-child relationships for layout alignment
+        parent_map: Dict[str, str] = {}  # child_key -> parent_key
+        for e in edges:
+            parent_map[e.get("target", "")] = e.get("source", "")
+        
+        # Build node lookup
+        node_by_key: Dict[str, Dict[str, Any]] = {n["key"]: n for n in nodes}
+        
         layers: Dict[str, List[Dict[str, Any]]] = {}
         for n in nodes:
             layers.setdefault(n.get("layer", "service"), []).append(n)
 
-        # Sort layers and nodes for stable output.
         ordered_layers = sorted(layers.items(), key=lambda kv: layer_index(kv[0]))
-
         element_by_key: Dict[str, ExcalidrawElement] = {}
+        
+        # Track x positions to align children with parents
+        node_x_positions: Dict[str, float] = {}
 
         for li, (layer, layer_nodes) in enumerate(ordered_layers):
-            layer_nodes = sorted(layer_nodes, key=lambda n: n.get("label", ""))
+            # Sort nodes: try to align with parent's x position, or alphabetically
+            def sort_key(n: Dict[str, Any]) -> Tuple[float, str]:
+                key = n.get("key", "")
+                parent_key = parent_map.get(key)
+                if parent_key and parent_key in node_x_positions:
+                    return (node_x_positions[parent_key], n.get("label", ""))
+                return (float('inf'), n.get("label", ""))
+            
+            layer_nodes = sorted(layer_nodes, key=sort_key)
             y = y_start + li * layer_spacing
+            
             for ni, n in enumerate(layer_nodes):
-                x = x_start + ni * node_spacing
+                # Try to align with parent if possible
+                key = n.get("key", "")
+                parent_key = parent_map.get(key)
+                if parent_key and parent_key in node_x_positions:
+                    x = node_x_positions[parent_key]
+                else:
+                    x = x_start + ni * node_spacing
+                
+                # Avoid overlap with existing nodes in same layer
+                while any(abs(node_x_positions.get(ln.get("key", ""), -9999) - x) < node_spacing * 0.9 
+                         for ln in layer_nodes[:ni] if ln.get("key") in node_x_positions):
+                    x += node_spacing
+                
+                node_x_positions[key] = x
+                
                 kind = (n.get("kind") or "service").lower()
                 element_id = str(uuid.uuid4())
 
-                shape: ExcalidrawElement
-                if kind in {"database", "cache"}:
-                    shape = Ellipse(
-                        id=element_id,
-                        x=x,
-                        y=y,
-                        width=w,
-                        height=h,
-                        strokeColor=theme_colors["stroke"],
-                        backgroundColor=theme_colors["bg"],
-                        roughness=2 if theme == "sketchy" else 1,
-                        strokeWidth=2,
-                    )
+                # Get professional colors based on component type
+                comp_type = self._classify_component(kind)
+                if style == "pro":
+                    colors = get_component_colors(comp_type)
+                    stroke_color = colors["stroke"]
+                    bg_color = colors["bg"]
                 else:
-                    shape = Rectangle(
-                        id=element_id,
-                        x=x,
-                        y=y,
-                        width=w,
-                        height=h,
-                        strokeColor=theme_colors["stroke"],
-                        backgroundColor=theme_colors["bg"],
-                        roughness=2 if theme == "sketchy" else 1,
-                        strokeWidth=2,
-                        fillStyle="hachure" if theme == "sketchy" else "solid",
-                    )
+                    themes = {
+                        "modern": {"stroke": "#1971c2", "bg": "#e7f5ff"},
+                        "sketchy": {"stroke": "#495057", "bg": "#f8f9fa"},
+                        "technical": {"stroke": "#2f9e44", "bg": "#ebfbee"},
+                        "colorful": {"stroke": "#e03131", "bg": "#fff5f5"},
+                    }
+                    theme_colors = themes.get(theme, themes["modern"])
+                    stroke_color = theme_colors["stroke"]
+                    bg_color = theme_colors["bg"]
+
+                shape = self._create_component_shape(
+                    element_id, x, y, w, h,
+                    comp_type, stroke_color, bg_color, theme
+                )
 
                 elements.append(shape)
                 element_by_key[n["key"]] = shape
 
                 label = n.get("label", n.get("key", ""))
-                text = Text(
-                    id=str(uuid.uuid4()),
-                    x=x + 10,
-                    y=y + h / 2 - 10,
-                    width=w - 20,
-                    height=20,
-                    text=label,
-                    fontSize=16,
-                    textAlign="center",
-                    verticalAlign="middle",
-                    strokeColor=theme_colors["stroke"],
-                    backgroundColor="transparent",
-                    fontFamily=3 if theme == "sketchy" else 1,
+                text = self._create_label(
+                    label, x, y, w, h, stroke_color, theme
                 )
                 elements.append(text)
+                
+                # Add type badge for pro style
+                if style == "pro":
+                    badge = self._create_type_badge(comp_type, x, y, w, stroke_color)
+                    if badge:
+                        elements.append(badge)
 
+        # Add edges with curved arrows
         for e in edges:
             s_key = e.get("source")
             t_key = e.get("target")
@@ -429,21 +596,20 @@ class ArchitectureTemplate(DiagramTemplate):
             t_el = element_by_key[t_key]
 
             sx = s_el.x + s_el.width / 2
-            sy = s_el.y + s_el.height / 2
+            sy = s_el.y + s_el.height
             tx = t_el.x + t_el.width / 2
-            ty = t_el.y + t_el.height / 2
+            ty = t_el.y
 
             arrow = Arrow(
                 id=str(uuid.uuid4()),
-                x=sx,
-                y=sy,
-                width=abs(tx - sx),
-                height=abs(ty - sy),
-                strokeColor=theme_colors["line"],
+                x=sx, y=sy,
+                width=abs(tx - sx), height=abs(ty - sy),
+                strokeColor="#64748b",
                 points=[[0, 0], [tx - sx, ty - sy]],
-                startBinding={"elementId": s_el.id, "focus": 0.5, "gap": 10},
-                endBinding={"elementId": t_el.id, "focus": 0.5, "gap": 10},
+                startBinding={"elementId": s_el.id, "focus": 0.5, "gap": 8},
+                endBinding={"elementId": t_el.id, "focus": 0.5, "gap": 8},
                 endArrowhead="arrow",
+                strokeWidth=2
             )
             elements.append(arrow)
 
@@ -492,48 +658,39 @@ class ArchitectureTemplate(DiagramTemplate):
                         elements.append(arrow)
     
     def _parse_architecture_description(self, description: str) -> List[str]:
-        """Parse architecture description"""
+        """Parse architecture description into component list."""
+        # Remove duplicates while preserving order
+        seen = set()
+        components = []
+        
         separators = [r'\s*,\s*', r'\s*->\s*', r'\s*→\s*']
         
         for sep in separators:
             if re.search(sep, description):
-                return [comp.strip() for comp in re.split(sep, description)]
+                for comp in re.split(sep, description):
+                    comp = comp.strip()
+                    if comp and comp not in seen:
+                        seen.add(comp)
+                        components.append(comp)
+                return components
         
-        return [description.strip()]
+        desc = description.strip()
+        if desc:
+            return [desc]
+        return []
     
     def _organize_by_layers(self, components: List[str]) -> List[List[str]]:
-        """Organize components by layers"""
-        frontend = []
-        backend = []
-        database = []
-        
-        for component in components:
-            comp_lower = component.lower()
-            if any(keyword in comp_lower for keyword in ['ui', 'frontend', 'web', 'app', 'client']):
-                frontend.append(component)
-            elif any(keyword in comp_lower for keyword in ['database', 'db', 'redis', 'mysql', 'postgres']):
-                database.append(component)
-            else:
-                backend.append(component)
-        
-        layers = []
-        if frontend:
-            layers.append(frontend)
-        if backend:
-            layers.append(backend)
-        if database:
-            layers.append(database)
-        
-        return layers or [components]
-    
+        """Legacy method - organize components by basic layers."""
+        layers_dict = self._organize_by_layers_enhanced(components)
+        result = []
+        for layer_name in self.LAYER_ORDER:
+            if layer_name in layers_dict:
+                result.append(layers_dict[layer_name])
+        return result or [components]
 
     def _determine_component_type(self, component: str) -> str:
-        """Determine component type"""
-        comp_lower = component.lower()
-        if any(keyword in comp_lower for keyword in ['database', 'db', 'redis', 'mysql', 'postgres']):
-            return "database"
-        else:
-            return "service"
+        """Determine component type for coloring."""
+        return self._classify_component(component)
 
 
 class MindmapTemplate(DiagramTemplate):
@@ -670,15 +827,16 @@ class MindmapTemplate(DiagramTemplate):
 
 
 class ExcalidrawGenerator:
-    """Excalidraw diagram generator."""
+    """Professional Excalidraw diagram generator with library support."""
     
     def __init__(self, data_dir: Optional[Path] = None):
         if data_dir is None:
             data_dir = Path(__file__).parent.parent / "data"
         self.data_dir = data_dir
+        self.library_manager = LibraryManager(data_dir)
         self.templates = {
             "flowchart": FlowchartTemplate(),
-            "architecture": ArchitectureTemplate(),
+            "architecture": ArchitectureTemplate(self.library_manager),
             "mindmap": MindmapTemplate(),
         }
     
@@ -686,18 +844,42 @@ class ExcalidrawGenerator:
         self, 
         description: str, 
         diagram_type: str = "flowchart",
-        theme: str = "modern"
+        theme: str = "modern",
+        style: str = "pro"
     ) -> Dict[str, Any]:
-        """Generate Excalidraw diagram"""
+        """Generate professional Excalidraw diagram.
+        
+        Args:
+            description: Natural language description of the diagram
+            diagram_type: Type of diagram (flowchart, architecture, mindmap)
+            theme: Visual theme (modern, sketchy, technical, colorful)
+            style: Color style ("pro" for rich type-based colors, "basic" for theme colors)
+        
+        Returns:
+            Excalidraw JSON diagram
+        """
         if diagram_type not in self.templates:
             raise ValueError(f"Unsupported diagram type: {diagram_type}")
         
         template = self.templates[diagram_type]
-        elements = template.generate_elements(description, theme)
+        
+        # Architecture template supports style parameter
+        if diagram_type == "architecture":
+            elements = template.generate_elements(description, theme, style)
+        else:
+            elements = template.generate_elements(description, theme)
         
         excalidraw_elements = []
         for element in elements:
             excalidraw_elements.append(self._element_to_dict(element))
+        
+        # Choose background color based on theme
+        bg_colors = {
+            "modern": "#ffffff",
+            "sketchy": "#fffdf8",
+            "technical": "#f8fafc",
+            "colorful": "#fefefe",
+        }
         
         diagram = {
             "type": "excalidraw",
@@ -706,7 +888,7 @@ class ExcalidrawGenerator:
             "elements": excalidraw_elements,
             "appState": {
                 "gridSize": None,
-                "viewBackgroundColor": "#ffffff",
+                "viewBackgroundColor": bg_colors.get(theme, "#ffffff"),
                 "currentItemStrokeColor": "#1971c2",
                 "currentItemBackgroundColor": "#a5d8ff",
                 "currentItemFillStyle": "solid",
@@ -785,49 +967,73 @@ def format_diagram_info(diagram: Dict[str, Any]) -> str:
         types[elem_type] = types.get(elem_type, 0) + 1
     
     output = []
-    output.append(f"🎨 Generated diagram contains {element_count} elements:")
+    output.append(f"Generated diagram contains {element_count} elements:")
     for elem_type, count in types.items():
-        output.append(f"  • {elem_type}: {count}")
+        output.append(f"  - {elem_type}: {count}")
     
     return "\n".join(output)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate Excalidraw diagrams from natural language descriptions",
+        description="Generate professional Excalidraw diagrams from natural language descriptions",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Basic flowchart
   %(prog)s "User login -> Verify -> Access data" --type flowchart
-  %(prog)s "API Gateway -> Service -> Database" --type architecture
-  %(prog)s --project . --type architecture
-  %(prog)s "System overview" --theme modern --output diagram.json
+  
+  # Professional architecture diagram with rich colors
+  %(prog)s "Load Balancer -> API Gateway -> Redis Cache -> PostgreSQL" --type architecture --style pro
+  
+  # Technical-style architecture
+  %(prog)s "CDN -> Nginx -> FastAPI -> Kafka -> MongoDB" --type architecture --theme technical
+  
+  # Project analysis
+  %(prog)s --project . --type architecture --style pro
+  
+  # Mind map
+  %(prog)s "Python Web Stack: FastAPI, SQLAlchemy, Redis, Celery" --type mindmap
+  
+  # Interactive mode
   %(prog)s --interactive
         """,
     )
     
-    parser.add_argument("description", nargs="?", help="图表描述")
+    parser.add_argument("description", nargs="?", help="Diagram description (e.g., 'API -> Service -> DB')")
     parser.add_argument("--project", help="Analyze a Python project and generate an architecture diagram")
     parser.add_argument("--focus", choices=["backend", "all"], default="backend", help="Focus area for project analysis")
     parser.add_argument("--use-ty", action="store_true", help="Include Astral ty metadata if available")
     parser.add_argument("--type", "-t", choices=["flowchart", "architecture", "mindmap"], 
-                       default="flowchart", help="图表类型")
+                       default="flowchart", help="Diagram type")
     parser.add_argument("--theme", choices=["modern", "sketchy", "technical", "colorful"],
-                       default="modern", help="图表主题")
-    parser.add_argument("--output", "-o", help="输出文件名")
-    parser.add_argument("--interactive", "-i", action="store_true", help="交互式生成")
-    parser.add_argument("--verbose", "-v", action="store_true", help="显示详细信息")
+                       default="modern", help="Visual theme")
+    parser.add_argument("--style", "-s", choices=["pro", "basic"],
+                       default="pro", help="Color style: 'pro' uses rich type-based colors, 'basic' uses theme colors")
+    parser.add_argument("--output", "-o", help="Output filename")
+    parser.add_argument("--interactive", "-i", action="store_true", help="Interactive mode")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed info")
+    parser.add_argument("--list-types", action="store_true", help="List supported component types")
     
     args = parser.parse_args()
     
     generator = ExcalidrawGenerator()
+    
+    if args.list_types:
+        print("Supported component types with professional colors:\n")
+        for comp_type, colors in sorted(COMPONENT_COLORS.items()):
+            print(f"  - {comp_type:20} stroke: {colors['stroke']}  bg: {colors['bg']}")
+        print("\nUse these keywords in your description to get matching colors.")
+        return
     
     if args.project:
         graph = analyze_python_project_to_graph(args.project, focus=args.focus, use_ty=args.use_ty)
         if args.type != "architecture":
             raise SystemExit("Project analysis currently supports only --type architecture")
 
-        elements = generator.templates["architecture"].generate_elements_from_graph(graph, args.theme)
+        elements = generator.templates["architecture"].generate_elements_from_graph(
+            graph, args.theme, args.style
+        )
         diagram = {
             "type": "excalidraw",
             "version": 2,
@@ -858,42 +1064,55 @@ Examples:
         output_file = args.output or f"diagram_project_{args.type}.json"
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(diagram, f, indent=2, ensure_ascii=False)
-        print(f"✅ Diagram generated: {output_file}")
-        print("🌐 Import it at https://excalidraw.com")
+        print(f"Diagram generated: {output_file}")
+        print(f"Elements: {len(diagram['elements'])}")
+        print("Import it at https://excalidraw.com")
         return
 
     if args.interactive:
-        print("🎨 Excalidraw diagram generator (interactive)")
-        print("=" * 50)
+        print("Professional Excalidraw Diagram Generator")
+        print("=" * 55)
+        print("Tips:")
+        print("  - Use '->' to connect components")
+        print("  - Keywords like 'database', 'cache', 'queue' get special styling")
+        print("  - Type 'types' to see available component types")
         
         while True:
-            description = input("\nDescribe the diagram (type 'quit' to exit): ")
-            if description.lower() in ['quit', 'q', '退出']:
+            description = input("\nDescribe the diagram (or 'quit' to exit): ")
+            if description.lower() in ['quit', 'q', '退出', 'exit']:
                 break
             
-            diagram_type = input("Diagram type (flowchart/architecture/mindmap) [flowchart]: ").strip()
-            if not diagram_type:
-                diagram_type = "flowchart"
+            if description.lower() == 'types':
+                for comp_type in sorted(COMPONENT_COLORS.keys()):
+                    print(f"  - {comp_type}")
+                continue
             
-            theme = input("Theme (modern/sketchy/technical/colorful) [modern]: ").strip()
-            if not theme:
-                theme = "modern"
+            diagram_type = input("Type (flowchart/architecture/mindmap) [architecture]: ").strip()
+            if not diagram_type:
+                diagram_type = "architecture"
+            
+            style = input("Style (pro/basic) [pro]: ").strip()
+            if not style:
+                style = "pro"
             
             try:
-                diagram = generator.generate_diagram(description, diagram_type, theme)
+                diagram = generator.generate_diagram(description, diagram_type, args.theme, style)
                 
                 if args.verbose:
                     print(format_diagram_info(diagram))
                 
-                output_file = f"diagram_{len(description)}.json"
+                # Create descriptive filename
+                safe_desc = re.sub(r'[^\w\s-]', '', description[:30]).strip().replace(' ', '_')
+                output_file = f"diagram_{safe_desc}.json"
                 with open(output_file, "w", encoding="utf-8") as f:
                     json.dump(diagram, f, indent=2, ensure_ascii=False)
                 
-                print(f"✅ Diagram generated: {output_file}")
-                print("🌐 Import it at https://excalidraw.com")
+                print(f"Diagram generated: {output_file}")
+                print(f"Elements: {len(diagram['elements'])}")
+                print("Import it at https://excalidraw.com")
                 
             except Exception as e:
-                print(f"❌ Generation failed: {e}")
+                print(f"Generation failed: {e}")
         
         return
     
@@ -902,7 +1121,7 @@ Examples:
         sys.exit(1)
     
     try:
-        diagram = generator.generate_diagram(args.description, args.type, args.theme)
+        diagram = generator.generate_diagram(args.description, args.type, args.theme, args.style)
         
         if args.verbose:
             print(format_diagram_info(diagram))
@@ -911,11 +1130,12 @@ Examples:
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(diagram, f, indent=2, ensure_ascii=False)
         
-        print(f"✅ Diagram generated: {output_file}")
-        print("🌐 Import it at https://excalidraw.com")
+        print(f"Diagram generated: {output_file}")
+        print(f"Elements: {len(diagram['elements'])}")
+        print("Import it at https://excalidraw.com")
         
     except Exception as e:
-        print(f"❌ Generation failed: {e}")
+        print(f"Generation failed: {e}")
         sys.exit(1)
 
 
