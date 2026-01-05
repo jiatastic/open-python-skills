@@ -546,7 +546,7 @@ class MindmapTemplate(DiagramTemplate):
         """Generate mind map elements."""
         elements = []
         
-        parts = re.split(r'[:：]', description, 1)
+        parts = re.split(r'[:：]', description, maxsplit=1)
         root_text = parts[0].strip()
         children_text = parts[1].strip() if len(parts) > 1 else ""
         

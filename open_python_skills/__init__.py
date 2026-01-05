@@ -1,6 +1,6 @@
 """Open Python Skills - AI skill for Python backend development."""
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 __author__ = "Haoxiang Jia"
 __email__ = "henry@podpitch.com"
 
