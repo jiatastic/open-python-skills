@@ -34,9 +34,7 @@ class KnowledgeDB:
     """Local searchable knowledge database."""
 
     def __init__(self, data_dir: Optional[Path] = None):
-        if data_dir is None:
-            data_dir = Path(__file__).parent.parent / "data"
-        self.data_dir = data_dir
+        self.data_dir = data_dir or Path(__file__).parent.parent / "data"
         self.entries: list[dict] = []
         self.sources: list[str] = []
         self._load_all()

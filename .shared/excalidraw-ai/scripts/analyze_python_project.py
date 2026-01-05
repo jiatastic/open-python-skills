@@ -161,6 +161,169 @@ def _run_ty_check(project_root: Path) -> Dict[str, Any]:
         return {"available": True, "error": str(e)}
 
 
+def _detect_package_structure(project_root: Path) -> Dict[str, Any]:
+    """
+    Detect Python package structure: modules, subpackages, entry points.
+    Returns structure info for non-backend projects (CLI tools, libraries, etc.)
+    """
+    structure: Dict[str, Any] = {
+        "is_package": False,
+        "package_name": None,
+        "modules": [],
+        "subpackages": [],
+        "entry_points": [],
+        "data_dirs": [],
+        "script_dirs": [],
+    }
+    
+    # Check for pyproject.toml or setup.py
+    has_pyproject = (project_root / "pyproject.toml").exists()
+    has_setup = (project_root / "setup.py").exists()
+    
+    if has_pyproject or has_setup:
+        structure["is_package"] = True
+    
+    # Find package directories (dirs with __init__.py)
+    for init_file in project_root.rglob("__init__.py"):
+        if any(part in DEFAULT_EXCLUDE_DIRS for part in init_file.parts):
+            continue
+        pkg_dir = init_file.parent
+        rel_path = pkg_dir.relative_to(project_root)
+        
+        # Skip nested packages for now, get top-level
+        if len(rel_path.parts) == 1:
+            structure["package_name"] = rel_path.parts[0]
+            
+            # Scan subpackages
+            for subdir in pkg_dir.iterdir():
+                if subdir.is_dir() and not subdir.name.startswith(("_", ".")):
+                    if (subdir / "SKILL.md").exists() or (subdir / "scripts").exists():
+                        # This is a skill/module
+                        subpkg_info = {
+                            "name": subdir.name,
+                            "has_skill_md": (subdir / "SKILL.md").exists(),
+                            "has_scripts": (subdir / "scripts").exists(),
+                            "has_data": (subdir / "data").exists(),
+                            "scripts": [],
+                            "data_files": [],
+                        }
+                        
+                        # List scripts
+                        scripts_dir = subdir / "scripts"
+                        if scripts_dir.exists():
+                            for script in scripts_dir.glob("*.py"):
+                                if not script.name.startswith("_"):
+                                    subpkg_info["scripts"].append(script.name)
+                        
+                        # List data files
+                        data_dir = subdir / "data"
+                        if data_dir.exists():
+                            for data_file in data_dir.iterdir():
+                                if data_file.is_file() and not data_file.name.startswith("."):
+                                    subpkg_info["data_files"].append(data_file.name)
+                        
+                        structure["subpackages"].append(subpkg_info)
+            
+            # Check for CLI entry point
+            cli_file = pkg_dir / "cli.py"
+            if cli_file.exists():
+                structure["entry_points"].append("cli.py")
+            main_file = pkg_dir / "__main__.py"
+            if main_file.exists():
+                structure["entry_points"].append("__main__.py")
+    
+    return structure
+
+
+def _build_package_graph(structure: Dict[str, Any], project_root: Path) -> Tuple[List[GraphNode], List[GraphEdge]]:
+    """
+    Build a graph representing package structure (for CLI tools, libraries, skill packages).
+    Uses cleaner labels for better diagram readability.
+    """
+    nodes: List[GraphNode] = []
+    edges: List[GraphEdge] = []
+    
+    pkg_name = structure.get("package_name") or project_root.name
+    
+    # Main package node
+    nodes.append(GraphNode(
+        key="package",
+        label=f"📦 {pkg_name}",
+        kind="package",
+        layer="external"
+    ))
+    
+    # Entry point (CLI)
+    has_cli = bool(structure.get("entry_points"))
+    if has_cli:
+        nodes.append(GraphNode(
+            key="cli",
+            label="🚀 CLI",
+            kind="cli",
+            layer="edge"
+        ))
+        edges.append(GraphEdge(source="package", target="cli"))
+    
+    # Subpackages / Skills
+    for subpkg in structure.get("subpackages", []):
+        subpkg_name = subpkg["name"]
+        subpkg_key = f"skill_{subpkg_name}"
+        
+        # Determine icon based on name
+        icon = "🔧"
+        if "commit" in subpkg_name:
+            icon = "📝"
+        elif "excalidraw" in subpkg_name or "diagram" in subpkg_name:
+            icon = "🎨"
+        elif "backend" in subpkg_name or "api" in subpkg_name:
+            icon = "⚡"
+        
+        nodes.append(GraphNode(
+            key=subpkg_key,
+            label=f"{icon} {subpkg_name}",
+            kind="skill",
+            layer="api"
+        ))
+        
+        # Connect from CLI or package
+        parent_key = "cli" if has_cli else "package"
+        edges.append(GraphEdge(source=parent_key, target=subpkg_key))
+        
+        # Scripts - show count only for cleaner display
+        scripts = subpkg.get("scripts", [])
+        if scripts:
+            scripts_key = f"scripts_{subpkg_name}"
+            script_count = len(scripts)
+            nodes.append(GraphNode(
+                key=scripts_key,
+                label=f"📜 {script_count} script{'s' if script_count > 1 else ''}",
+                kind="script",
+                layer="service"
+            ))
+            edges.append(GraphEdge(source=subpkg_key, target=scripts_key))
+        
+        # Data files - show count and max 2 extensions
+        data_files = subpkg.get("data_files", [])
+        if data_files:
+            data_key = f"data_{subpkg_name}"
+            data_count = len(data_files)
+            extensions = sorted(set(Path(f).suffix for f in data_files if Path(f).suffix))
+            ext_str = ", ".join(extensions[:2])
+            if len(extensions) > 2:
+                ext_str += "..."
+            
+            nodes.append(GraphNode(
+                key=data_key,
+                label=f"📁 {data_count} {ext_str}",
+                kind="data",
+                layer="data"
+            ))
+            source_key = scripts_key if scripts else subpkg_key
+            edges.append(GraphEdge(source=source_key, target=data_key))
+    
+    return nodes, edges
+
+
 def analyze_python_project_to_graph(
     project_path: str,
     *,
@@ -174,6 +337,10 @@ def analyze_python_project_to_graph(
       "edges": [{"source","target","label"}, ...],
       "meta": {...}
     }
+    
+    Supports both:
+    - Backend applications (FastAPI, SQLAlchemy, Redis, etc.)
+    - Package/CLI tools (skill packages, libraries, etc.)
     """
     project_root = Path(project_path).resolve()
     py_files = list(_iter_python_files(project_root))
@@ -216,61 +383,76 @@ def analyze_python_project_to_graph(
     queue_present = any(m in imports_all for m in {"celery", "rq", "dramatiq"})
     http_client_present = any(m in imports_all for m in {"requests", "httpx"})
 
+    # Detect package structure
+    pkg_structure = _detect_package_structure(project_root)
+    
+    # If it's a package with subpackages (skill package, library, etc.), use package graph
+    # instead of backend graph
+    is_skill_package = pkg_structure.get("is_package") and pkg_structure.get("subpackages")
+    is_backend_app = fastapi_present or route_count > 0 or sqlalchemy_present or redis_present
+    
     nodes: List[GraphNode] = []
     edges: List[GraphEdge] = []
 
-    # External caller / client
-    nodes.append(GraphNode(key="client", label="Client", kind="external", layer="external"))
-
-    # Edge / gateway (heuristic only)
-    nodes.append(GraphNode(key="edge", label="API Gateway / Edge", kind="edge", layer="edge"))
-    edges.append(GraphEdge(source="client", target="edge"))
-
-    # API layer
-    if fastapi_present or route_count > 0:
-        api_label = f"FastAPI API ({route_count} routes)" if route_count else "FastAPI API"
+    if is_skill_package and not is_backend_app:
+        # This is a package/CLI tool, not a backend service
+        nodes, edges = _build_package_graph(pkg_structure, project_root)
     else:
-        api_label = "API Layer"
-    nodes.append(GraphNode(key="api", label=api_label, kind="api", layer="api"))
-    edges.append(GraphEdge(source="edge", target="api"))
+        # Original backend analysis logic
+        # External caller / client
+        nodes.append(GraphNode(key="client", label="Client", kind="external", layer="external"))
 
-    if auth_present:
-        nodes.append(GraphNode(key="auth", label="Auth / Security", kind="service", layer="service"))
-        edges.append(GraphEdge(source="api", target="auth"))
+        # Edge / gateway (heuristic only)
+        nodes.append(GraphNode(key="edge", label="API Gateway / Edge", kind="edge", layer="edge"))
+        edges.append(GraphEdge(source="client", target="edge"))
 
-    # Service layer
-    if focus in {"backend", "all"} and (service_hint_present or http_client_present or auth_present):
-        nodes.append(GraphNode(key="svc", label="Service Layer", kind="service", layer="service"))
-        edges.append(GraphEdge(source="api", target="svc"))
+        # API layer
+        if fastapi_present or route_count > 0:
+            api_label = f"FastAPI API ({route_count} routes)" if route_count else "FastAPI API"
+        else:
+            api_label = "API Layer"
+        nodes.append(GraphNode(key="api", label=api_label, kind="api", layer="api"))
+        edges.append(GraphEdge(source="edge", target="api"))
+
         if auth_present:
-            edges.append(GraphEdge(source="auth", target="svc", label="auth context"))
+            nodes.append(GraphNode(key="auth", label="Auth / Security", kind="service", layer="service"))
+            edges.append(GraphEdge(source="api", target="auth"))
 
-    # Data layer
-    if sqlalchemy_present or data_hint_present:
-        nodes.append(GraphNode(key="db", label="Database (SQLAlchemy)", kind="database", layer="data"))
-        if any(n.key == "svc" for n in nodes):
-            edges.append(GraphEdge(source="svc", target="db"))
-        else:
-            edges.append(GraphEdge(source="api", target="db"))
+        # Service layer
+        if focus in {"backend", "all"} and (service_hint_present or http_client_present or auth_present):
+            nodes.append(GraphNode(key="svc", label="Service Layer", kind="service", layer="service"))
+            edges.append(GraphEdge(source="api", target="svc"))
+            if auth_present:
+                edges.append(GraphEdge(source="auth", target="svc", label="auth context"))
 
-    if redis_present:
-        nodes.append(GraphNode(key="cache", label="Redis Cache", kind="cache", layer="data"))
-        if any(n.key == "svc" for n in nodes):
-            edges.append(GraphEdge(source="svc", target="cache"))
-        else:
-            edges.append(GraphEdge(source="api", target="cache"))
+        # Data layer
+        if sqlalchemy_present or data_hint_present:
+            nodes.append(GraphNode(key="db", label="Database (SQLAlchemy)", kind="database", layer="data"))
+            if any(n.key == "svc" for n in nodes):
+                edges.append(GraphEdge(source="svc", target="db"))
+            else:
+                edges.append(GraphEdge(source="api", target="db"))
 
-    if queue_present:
-        nodes.append(GraphNode(key="queue", label="Queue / Workers", kind="infra", layer="infra"))
-        if any(n.key == "svc" for n in nodes):
-            edges.append(GraphEdge(source="svc", target="queue"))
-        else:
-            edges.append(GraphEdge(source="api", target="queue"))
+        if redis_present:
+            nodes.append(GraphNode(key="cache", label="Redis Cache", kind="cache", layer="data"))
+            if any(n.key == "svc" for n in nodes):
+                edges.append(GraphEdge(source="svc", target="cache"))
+            else:
+                edges.append(GraphEdge(source="api", target="cache"))
+
+        if queue_present:
+            nodes.append(GraphNode(key="queue", label="Queue / Workers", kind="infra", layer="infra"))
+            if any(n.key == "svc" for n in nodes):
+                edges.append(GraphEdge(source="svc", target="queue"))
+            else:
+                edges.append(GraphEdge(source="api", target="queue"))
 
     meta: Dict[str, Any] = {
         "project_root": str(project_root),
         "python_files": len(py_files),
         "imports_top": sorted(list(imports_all))[:30],
+        "project_type": "skill_package" if (is_skill_package and not is_backend_app) else "backend",
+        "package_structure": pkg_structure if is_skill_package else None,
         "signals": {
             "fastapi": fastapi_present,
             "routes": route_count,
