@@ -1,128 +1,464 @@
 ---
 name: excalidraw-ai
 description: >
-  AI-powered professional Excalidraw diagram generator with a rich component library.
-  Use when: (1) Creating flowcharts from text, (2) Generating architecture diagrams
-  with a professional look, (3) Building mind maps, (4) Designing system workflows,
-  (5) Creating technical documentation visuals, or (6) Converting complex ideas into visuals.
-  Features automatic component type detection, rich color palettes, and library icon support.
+  Create professional Excalidraw diagrams by generating JSON directly.
+  This skill provides the Excalidraw JSON schema reference and professional icon libraries
+  for AI agents to autonomously create diagrams without templates.
 ---
 
 # excalidraw-ai
 
-AI-powered professional Excalidraw diagram generator with intelligent component detection and extensive library icon support.
+Generate Excalidraw diagrams by writing JSON directly. No templates needed - you have full control over every element.
 
-## ✨ Features
+## 🎯 When to Use This Skill
 
-- **🎨 Professional color palettes** - Each component type has a unique color scheme (e.g., Database = purple, Cache = red, Queue = green, etc.)
-- **🧠 Smart Component Recognition** - Automatically detects the type of each component (e.g., "Redis" → cache, "PostgreSQL" → database)
-- **📚 Library Icon Support** - Uses professional icons from `.excalidrawlib` files
-- **🏗️ Multi-layer Architecture Layouts** - Automatically arranges components in architectural layers (Client → Gateway → Service → Database)
-- **🏷️ Type Badges** - Optionally displays component type badges (e.g., "🗄️ DB", "⚡ Cache")
+Use this skill when you need to:
+- Create architecture diagrams, flowcharts, or mind maps
+- Visualize system designs, data flows, or processes
+- Generate diagrams from code analysis or documentation
+- Create custom diagrams with precise control over layout and styling
 
-## Usage
+## 📚 Reference Search
+
+Search the Excalidraw reference database for elements, colors, layouts, and examples:
 
 ```bash
-# 🌟 Professional architecture diagram (auto-detects and colors components)
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
-  "Load Balancer -> API Gateway -> Redis Cache -> PostgreSQL" \
-  --type architecture --style pro
+# Search for element types
+python3 scripts/query_reference.py "rectangle"
+python3 scripts/query_reference.py "arrow"
 
-# Complete system architecture
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
-  "CDN -> Nginx -> FastAPI Service -> Kafka Queue -> MongoDB" \
-  --type architecture --style pro --output system_arch.json
+# Search for colors
+python3 scripts/query_reference.py "database colors"
+python3 scripts/query_reference.py "cache"
 
-# Basic flowchart
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
-  "User Login -> Verify -> Access Data" --type flowchart
+# Get full details for a specific entry
+python3 scripts/query_reference.py --get element-rectangle
+python3 scripts/query_reference.py --get colors-database
 
-# Hand-drawn style architecture diagram
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
-  "API Gateway -> Microservice -> Database" --type architecture --theme sketchy
+# List by category
+python3 scripts/query_reference.py --category elements
+python3 scripts/query_reference.py --category colors
+python3 scripts/query_reference.py --category layout
 
-# Mind map
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
-  "Python Development: FastAPI, SQLAlchemy, Redis, Celery" --type mindmap
-
-# ✅ Auto-generate backend architecture from a Python project
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py \
-  --project . --type architecture --style pro --output backend_arch.json
-
-# See supported component types
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --list-types
-
-# Interactive mode
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --interactive
+# List all categories/tags
+python3 scripts/query_reference.py --list-categories
+python3 scripts/query_reference.py --list-tags
 ```
 
-## 🎨 Supported Component Types & Colors
+### Reference Categories
 
-| Component Type   | Keywords                              | Border Color | Fill Color |
-|------------------|---------------------------------------|--------------|------------|
-| **Database**     | database, postgres, mysql, mongodb    | Purple       | Light purple |
-| **Cache**        | redis, cache, memcached               | Red          | Light red    |
-| **Message Queue**| kafka, rabbitmq, queue, sqs           | Green        | Light green  |
-| **Load Balancer**| load balancer, nginx, elb             | Teal         | Light teal   |
-| **Gateway**      | gateway, kong, apigee                 | Gray         | Light gray   |
-| **CDN**          | cdn, cloudfront, edge                 | Sky Blue     | Light blue   |
-| **Auth**         | auth, iam, oauth                      | Rose         | Light pink   |
-| **Storage**      | s3, storage, blob                     | Amber        | Light yellow |
-| **Service**      | service, api, backend                 | Blue         | Light blue   |
-| **Container**    | docker, kubernetes, k8s               | Blue         | Light blue   |
-| **Function**     | lambda, function, serverless          | Orange       | Light orange |
-| **Monitoring**   | prometheus, grafana, monitor          | Lime         | Light green  |
+| Category | Content |
+|----------|---------|
+| `schema` | File structure and format |
+| `elements` | Rectangle, ellipse, diamond, text, arrow, line |
+| `colors` | Color schemes by component type |
+| `layout` | Layout patterns for different diagram types |
+| `styles` | Visual style presets (modern, sketchy) |
+| `patterns` | Common patterns (grouping, bindings) |
+| `libraries` | Icon library documentation (AWS, system-design, etc.) |
+| `examples` | Complete diagram examples |
 
-## Supported Diagram Types
+## 📐 Excalidraw JSON Schema
 
-- `flowchart` - Flowcharts
-- `architecture` - Architecture diagrams (with `--style pro` for advanced coloring)
-- `mindmap` - Mind maps
+An Excalidraw file is a JSON object with this structure:
 
-## Themes
+```json
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [ /* array of element objects */ ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  },
+  "files": {}
+}
+```
 
-- `modern` - Minimalistic modern style
-- `sketchy` - Hand-drawn look
-- `technical` - Documentation/technical style
-- `colorful` - Vivid, colorful style
+### Element Types
 
-## Style Options
+#### Rectangle
+```json
+{
+  "id": "unique-id-1",
+  "type": "rectangle",
+  "x": 100,
+  "y": 100,
+  "width": 200,
+  "height": 100,
+  "strokeColor": "#1971c2",
+  "backgroundColor": "#a5d8ff",
+  "fillStyle": "solid",
+  "strokeWidth": 2,
+  "strokeStyle": "solid",
+  "roughness": 1,
+  "opacity": 100,
+  "groupIds": [],
+  "angle": 0,
+  "seed": 12345,
+  "isDeleted": false
+}
+```
 
-- `pro` - Professional palette, unique colors per component type (default)
-- `basic` - Theme-based uniform coloring
+#### Ellipse
+```json
+{
+  "id": "unique-id-2",
+  "type": "ellipse",
+  "x": 100,
+  "y": 100,
+  "width": 150,
+  "height": 100,
+  "strokeColor": "#7c3aed",
+  "backgroundColor": "#ede9fe",
+  "fillStyle": "solid",
+  "strokeWidth": 2,
+  "roughness": 1
+}
+```
 
-## Output
+#### Diamond
+```json
+{
+  "id": "unique-id-3",
+  "type": "diamond",
+  "x": 100,
+  "y": 100,
+  "width": 120,
+  "height": 120,
+  "strokeColor": "#dc2626",
+  "backgroundColor": "#fee2e2",
+  "fillStyle": "solid"
+}
+```
 
-Generated diagrams can be:
-- Imported directly into [Excalidraw.com](https://excalidraw.com)
-- Integrated into web apps via API
-- Exported as PNG/SVG images
-- Embedded in Markdown documentation
+#### Text
+```json
+{
+  "id": "unique-id-4",
+  "type": "text",
+  "x": 110,
+  "y": 140,
+  "width": 180,
+  "height": 25,
+  "text": "Your Label Here",
+  "fontSize": 20,
+  "fontFamily": 1,
+  "textAlign": "center",
+  "verticalAlign": "middle",
+  "strokeColor": "#1e1e1e",
+  "backgroundColor": "transparent"
+}
+```
 
-## 📚 Library Support
+#### Arrow
+```json
+{
+  "id": "unique-id-5",
+  "type": "arrow",
+  "x": 300,
+  "y": 150,
+  "width": 100,
+  "height": 50,
+  "strokeColor": "#1971c2",
+  "strokeWidth": 2,
+  "points": [[0, 0], [100, 50]],
+  "startBinding": {
+    "elementId": "source-element-id",
+    "focus": 0.5,
+    "gap": 5
+  },
+  "endBinding": {
+    "elementId": "target-element-id",
+    "focus": 0.5,
+    "gap": 5
+  },
+  "startArrowhead": null,
+  "endArrowhead": "arrow"
+}
+```
 
-You can load component icons from `.excalidrawlib` files:
+#### Line
+```json
+{
+  "id": "unique-id-6",
+  "type": "line",
+  "x": 100,
+  "y": 100,
+  "width": 200,
+  "height": 0,
+  "strokeColor": "#868e96",
+  "strokeWidth": 1,
+  "points": [[0, 0], [200, 0]],
+  "startArrowhead": null,
+  "endArrowhead": null
+}
+```
 
-- `software-architecture.excalidrawlib` - Software architecture icons
-- `system-design.excalidrawlib` - System design elements
-- `system-design-template.excalidrawlib` - System design templates
-- `drwnio.excalidrawlib` - Draw.io style icon set
-- `aws-architecture-icons.excalidrawlib` - AWS architecture icons
+### Element Properties Reference
 
-## Key Capabilities
+| Property | Type | Description |
+|----------|------|-------------|
+| `id` | string | Unique identifier (use UUID or similar) |
+| `type` | string | `rectangle`, `ellipse`, `diamond`, `text`, `arrow`, `line` |
+| `x`, `y` | number | Position coordinates |
+| `width`, `height` | number | Dimensions |
+| `strokeColor` | string | Border/stroke color (hex) |
+| `backgroundColor` | string | Fill color (hex) or `"transparent"` |
+| `fillStyle` | string | `"solid"`, `"hachure"`, `"cross-hatch"` |
+| `strokeWidth` | number | Line thickness (1, 2, 4) |
+| `strokeStyle` | string | `"solid"`, `"dashed"`, `"dotted"` |
+| `roughness` | number | 0 = sharp, 1 = normal, 2 = sketchy |
+| `opacity` | number | 0-100 |
+| `angle` | number | Rotation in radians |
+| `groupIds` | array | Group element IDs together |
+| `seed` | number | Random seed for hand-drawn effect |
 
-1. **Text-to-Diagram** - Generate professional diagrams from natural language descriptions
-2. **Intelligent Component Detection** - Auto-detect and classify components and style them accordingly
-3. **Professional Color Schemes** - Rich palettes based on component type
-4. **Python Project Analysis** - Scan code to generate backend architecture diagrams (`--project`)
-5. **Optional ty Metadata** - Integrate summary output from Astral `ty` type checking (`--use-ty`)
-6. **Multiple Visual Themes** - Choose from modern, sketchy, technical, or colorful themes
-7. **Interactive Editing** - Supports iterative, interactive editing
+### Text Properties
 
-## Example Output
+| Property | Type | Description |
+|----------|------|-------------|
+| `text` | string | The text content |
+| `fontSize` | number | Font size in pixels |
+| `fontFamily` | number | 1 = Virgil (hand-drawn), 2 = Helvetica, 3 = Cascadia |
+| `textAlign` | string | `"left"`, `"center"`, `"right"` |
+| `verticalAlign` | string | `"top"`, `"middle"` |
+
+### Arrow Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `points` | array | Array of [x, y] coordinates relative to element origin |
+| `startBinding` | object | Connection to source element |
+| `endBinding` | object | Connection to target element |
+| `startArrowhead` | string | `null`, `"arrow"`, `"bar"`, `"dot"`, `"triangle"` |
+| `endArrowhead` | string | `null`, `"arrow"`, `"bar"`, `"dot"`, `"triangle"` |
+
+## 🎨 Color Palette Reference
+
+### Component-Based Colors (Recommended for Architecture Diagrams)
+
+| Component Type | Stroke | Background | Use For |
+|----------------|--------|------------|---------|
+| **Database** | `#7c3aed` | `#ede9fe` | PostgreSQL, MySQL, MongoDB |
+| **Cache** | `#dc2626` | `#fee2e2` | Redis, Memcached |
+| **Queue** | `#16a34a` | `#dcfce7` | Kafka, RabbitMQ, SQS |
+| **Load Balancer** | `#0891b2` | `#cffafe` | Nginx, HAProxy, ALB |
+| **Gateway** | `#475569` | `#f1f5f9` | API Gateway, Kong |
+| **CDN** | `#06b6d4` | `#e0f2fe` | CloudFront, Fastly |
+| **Auth** | `#e11d48` | `#ffe4e6` | OAuth, IAM, Cognito |
+| **Storage** | `#d97706` | `#fef3c7` | S3, Blob Storage |
+| **Service** | `#2563eb` | `#dbeafe` | Backend services, APIs |
+| **Container** | `#0284c7` | `#bae6fd` | Docker, Kubernetes |
+| **Function** | `#f59e0b` | `#fef3c7` | Lambda, Serverless |
+| **Monitoring** | `#84cc16` | `#ecfccb` | Prometheus, Grafana |
+| **Web App** | `#4f46e5` | `#e0e7ff` | React, Vue, Frontend |
+| **Mobile** | `#6366f1` | `#eef2ff` | iOS, Android |
+
+### Theme Colors
+
+**Modern (Default)**
+- Primary: `#1971c2` / `#e7f5ff`
+- Neutral: `#64748b` / `#f1f5f9`
+
+**Sketchy (Hand-drawn)**
+- Primary: `#495057` / `#f8f9fa`
+- Use `roughness: 2` and `fontFamily: 3`
+
+**Technical**
+- Primary: `#2f9e44` / `#ebfbee`
+- Use `strokeStyle: "dashed"` for connections
+
+## 📚 Icon Libraries (305 Components Total)
+
+Professional icons are available in `.excalidrawlib` files in the `data/` directory:
+
+| Library | Components | Content |
+|---------|------------|---------|
+| `aws-architecture-icons.excalidrawlib` | 248 | AWS service icons (Lambda, S3, EC2, RDS, DynamoDB, SQS, etc.) |
+| `system-design.excalidrawlib` | 24 | System design elements (server, database, storage, etc.) |
+| `drwnio.excalidrawlib` | 18 | Draw.io style icons |
+| `system-design-template.excalidrawlib` | 8 | Pre-built templates (steps, flow, db, etc.) |
+| `software-architecture.excalidrawlib` | 7 | Software architecture components |
+
+Search for library documentation:
+```bash
+python3 scripts/query_reference.py --category libraries
+python3 scripts/query_reference.py "aws icons"
+```
+
+### Using Library Components
+
+Library files contain element arrays that can be embedded directly into your diagram. Each library item is an array of Excalidraw elements that form a component.
+
+To use: Parse the library JSON, find the component you need, adjust positions, and include in your diagram's elements array.
+
+## 🏗️ Layout Guidelines
+
+### Architecture Diagram Layout
+
+Organize components in layers (top to bottom):
 
 ```
-✅ Diagram generated: diagram_architecture.json
-📊 Elements: 24
-🌐 Import it at https://excalidraw.com
+Layer 1: Client/External (y: 100)
+Layer 2: Edge/CDN (y: 280)
+Layer 3: Gateway/Load Balancer (y: 460)
+Layer 4: Services (y: 640)
+Layer 5: Data/Cache (y: 820)
+Layer 6: Infrastructure (y: 1000)
 ```
+
+**Spacing recommendations:**
+- Horizontal spacing between components: 240px
+- Vertical spacing between layers: 180px
+- Component width: 180-220px
+- Component height: 80-100px
+
+### Flowchart Layout
+
+Arrange left-to-right or top-to-bottom:
+- Step spacing: 200px
+- Use rectangles for processes
+- Use diamonds for decisions
+- Use ellipses for start/end
+
+### Mind Map Layout
+
+Radial layout from center:
+- Center node at (400, 300)
+- Child nodes at radius 250px
+- Distribute evenly using angle calculations
+
+## 📝 Complete Example
+
+```json
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {
+      "id": "api-gateway",
+      "type": "rectangle",
+      "x": 100,
+      "y": 100,
+      "width": 180,
+      "height": 80,
+      "strokeColor": "#475569",
+      "backgroundColor": "#f1f5f9",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": ["group-1"],
+      "seed": 1234
+    },
+    {
+      "id": "api-gateway-label",
+      "type": "text",
+      "x": 140,
+      "y": 130,
+      "width": 100,
+      "height": 25,
+      "text": "API Gateway",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "strokeColor": "#1e1e1e",
+      "groupIds": ["group-1"]
+    },
+    {
+      "id": "redis",
+      "type": "diamond",
+      "x": 100,
+      "y": 280,
+      "width": 180,
+      "height": 100,
+      "strokeColor": "#dc2626",
+      "backgroundColor": "#fee2e2",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "roughness": 0,
+      "seed": 5678
+    },
+    {
+      "id": "redis-label",
+      "type": "text",
+      "x": 155,
+      "y": 320,
+      "width": 70,
+      "height": 20,
+      "text": "Redis",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "id": "arrow-1",
+      "type": "arrow",
+      "x": 190,
+      "y": 180,
+      "width": 0,
+      "height": 100,
+      "strokeColor": "#64748b",
+      "strokeWidth": 2,
+      "points": [[0, 0], [0, 100]],
+      "startBinding": {"elementId": "api-gateway", "focus": 0.5, "gap": 5},
+      "endBinding": {"elementId": "redis", "focus": 0.5, "gap": 5},
+      "endArrowhead": "arrow"
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff",
+    "gridSize": null
+  },
+  "files": {}
+}
+```
+
+## 💾 Output
+
+Save your diagram as a `.excalidraw` or `.json` file. It can be:
+- Imported directly into [excalidraw.com](https://excalidraw.com)
+- Embedded in documentation or web apps
+- Converted to PNG/SVG using Excalidraw's export features
+
+## 🛠️ Helper Scripts (Optional)
+
+The `scripts/` directory contains optional helper utilities:
+
+| Script | Purpose |
+|--------|---------|
+| `query_reference.py` | Search the Excalidraw reference database |
+| `library_manager.py` | Load icons from .excalidrawlib files, get component colors |
+| `analyze_python_project.py` | Analyze Python projects to extract architecture info |
+
+These are optional tools - you can generate diagrams directly using the JSON schema above.
+
+### Example: Using library_manager.py
+
+```python
+from library_manager import LibraryManager, get_component_colors
+
+# Get colors for a component type
+colors = get_component_colors("database")
+# Returns: {"stroke": "#7c3aed", "bg": "#ede9fe"}
+
+# Load library components
+manager = LibraryManager()
+manager.load_libraries()
+component = manager.find_component("redis")
+if component:
+    elements = component.instantiate(x=100, y=200, scale=1.0)
+```
+
+## 🧠 Tips for AI Agents
+
+1. **Generate unique IDs**: Use UUIDs or sequential IDs for each element
+2. **Group related elements**: Use `groupIds` to keep shapes and their labels together
+3. **Use bindings for arrows**: Connect arrows to elements using `startBinding` and `endBinding`
+4. **Apply consistent styling**: Use the color palette for component types
+5. **Calculate text positions**: Center text within shapes by adjusting x/y based on text length
+6. **Set seed values**: Use `seed: hash(id)` for consistent hand-drawn rendering
