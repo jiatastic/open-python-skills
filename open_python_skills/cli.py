@@ -91,11 +91,11 @@ def install_cursor(base_path: Path) -> bool:
     cursor_dir = base_path / ".cursor" / "commands"
     cursor_dir.mkdir(parents=True, exist_ok=True)
     
-    # python-backend skill command
-    kb_command = cursor_dir / "kb-search.md"
-    kb_content = """# kb-search
+    # Main open-python-skills command
+    main_command = cursor_dir / "open-python-skills.md"
+    main_content = """# open-python-skills
 
-Search Python backend best practices from the knowledge base.
+Search and use Python backend best practices from the knowledge base.
 
 ## Instructions
 
@@ -114,12 +114,22 @@ Search Python backend best practices from the knowledge base.
    python3 .shared/python-backend/scripts/knowledge_db.py --get {{entry-id}}
    ```
 
+## Available Categories
+
+Use `--list-categories` to discover all categories.
+
+## Knowledge Database
+
+- `.shared/python-backend/data/*.json` (multiple databases; incremental and searchable)
+
 ## Examples
 
-- `/kb-search async routes`
-- `/kb-search jwt authentication`
+- `/open-python-skills async routes`
+- `/open-python-skills jwt authentication`
+- `/open-python-skills pydantic validation`
+- `/open-python-skills database connection pooling`
 """
-    kb_command.write_text(kb_content, encoding="utf-8")
+    main_command.write_text(main_content, encoding="utf-8")
     
     # commit-message skill command
     commit_command = cursor_dir / "commit-batch.md"
