@@ -59,3 +59,92 @@ Files are grouped by:
 - **Directory/Module**: `src/api/`, `tests/`, `docs/`
 - **Change Type**: Added vs Modified vs Deleted
 - **Semantic Relationship**: Related files together
+
+## Context-Aware Commit Messages
+
+> **Note**: The `analyze_changes.py` script provides file grouping and basic suggestions. Use its output as a starting point, then read `git diff` to understand the actual changes and generate context-aware messages following the examples below.
+
+When generating commit messages, analyze the **actual code changes** to infer business context. Don't just describe files—describe what the changes accomplish.
+
+### Scope Guidelines
+
+The scope should reflect the **business module or feature**, not just the directory:
+
+| Scope Type | Example | When to Use |
+|------------|---------|-------------|
+| Feature/Module | `companion`, `calendar`, `inbox` | Changes to a specific product feature |
+| Platform | `ios`, `android`, `web` | Platform-specific changes |
+| Integration | `outlook`, `gmail`, `slack` | Third-party integration changes |
+| Component | `auth`, `api`, `db` | Core infrastructure changes |
+
+### Input/Output Examples
+
+**Example 1: New Feature**
+```
+Input (code changes):
+  + src/companion/pages/AvailabilityDetailPage.tsx
+  + src/companion/pages/AvailabilityActionsPage.tsx
+  + src/companion/components/AvailabilityCard.tsx
+  M src/companion/navigation/routes.ts
+
+Output:
+  feat(companion): add availability detail and actions pages for ios
+
+  - New AvailabilityDetailPage showing time slot details
+  - New AvailabilityActionsPage for booking/canceling
+  - AvailabilityCard component for list display
+  - Updated navigation routes
+```
+
+**Example 2: Bug Fix**
+```
+Input (code changes):
+  M src/integrations/outlook/email_sender.py
+  M src/integrations/outlook/auth.py
+
+Output:
+  fix(outlook): resolve email sending failures due to token expiration
+
+  Refresh OAuth token before sending when close to expiry
+```
+
+**Example 3: Multi-platform Change**
+```
+Input (code changes):
+  M ios/Calendar/CalendarView.swift
+  M android/calendar/CalendarFragment.kt
+  M web/src/calendar/Calendar.tsx
+
+Output:
+  feat(calendar): add week view across all platforms
+
+  Implement consistent week view UI for iOS, Android, and web
+```
+
+**Example 4: Chore/Maintenance**
+```
+Input (code changes):
+  M package.json
+  M yarn.lock
+  M requirements.txt
+
+Output:
+  chore(deps): update dependencies to latest versions
+```
+
+### Writing Good Descriptions
+
+|  Bad (Generic) | Good (Context-Aware) |
+|-----------------|------------------------|
+| `feat: add new file` | `feat(payments): add Stripe webhook handler` |
+| `fix: fix bug` | `fix(auth): prevent session timeout on mobile` |
+| `chore: update code` | `chore(ci): reduce build time with parallel jobs` |
+| `refactor: refactor utils` | `refactor(api): extract rate limiting to middleware` |
+
+### Key Principles
+
+1. **Read the code** - Understand what the changes actually do
+2. **Identify the feature** - What user-facing or system capability is affected?
+3. **Be specific** - Include relevant details (platform, integration, component)
+4. **Use active voice** - "add", "fix", "update", not "added", "fixed", "updated"
+5. **Keep it concise** - First line under 72 characters
