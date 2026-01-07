@@ -10,7 +10,7 @@ description: >
 
 Generate Excalidraw diagrams by writing JSON directly. No templates needed - you have full control over every element.
 
-## 🎯 When to Use This Skill
+## When to Use This Skill
 
 Use this skill when you need to:
 - Create architecture diagrams, flowcharts, or mind maps
@@ -18,47 +18,7 @@ Use this skill when you need to:
 - Generate diagrams from code analysis or documentation
 - Create custom diagrams with precise control over layout and styling
 
-## 📚 Reference Search
-
-Search the Excalidraw reference database for elements, colors, layouts, and examples:
-
-```bash
-# Search for element types
-python3 scripts/query_reference.py "rectangle"
-python3 scripts/query_reference.py "arrow"
-
-# Search for colors
-python3 scripts/query_reference.py "database colors"
-python3 scripts/query_reference.py "cache"
-
-# Get full details for a specific entry
-python3 scripts/query_reference.py --get element-rectangle
-python3 scripts/query_reference.py --get colors-database
-
-# List by category
-python3 scripts/query_reference.py --category elements
-python3 scripts/query_reference.py --category colors
-python3 scripts/query_reference.py --category layout
-
-# List all categories/tags
-python3 scripts/query_reference.py --list-categories
-python3 scripts/query_reference.py --list-tags
-```
-
-### Reference Categories
-
-| Category | Content |
-|----------|---------|
-| `schema` | File structure and format |
-| `elements` | Rectangle, ellipse, diamond, text, arrow, line |
-| `colors` | Color schemes by component type |
-| `layout` | Layout patterns for different diagram types |
-| `styles` | Visual style presets (modern, sketchy) |
-| `patterns` | Common patterns (grouping, bindings) |
-| `libraries` | Icon library documentation (AWS, system-design, etc.) |
-| `examples` | Complete diagram examples |
-
-## 📐 Excalidraw JSON Schema
+## Excalidraw JSON Schema
 
 An Excalidraw file is a JSON object with this structure:
 
@@ -235,7 +195,7 @@ An Excalidraw file is a JSON object with this structure:
 | `startArrowhead` | string | `null`, `"arrow"`, `"bar"`, `"dot"`, `"triangle"` |
 | `endArrowhead` | string | `null`, `"arrow"`, `"bar"`, `"dot"`, `"triangle"` |
 
-## 🎨 Color Palette Reference
+## Color Palette Reference
 
 ### Component-Based Colors (Recommended for Architecture Diagrams)
 
@@ -270,9 +230,9 @@ An Excalidraw file is a JSON object with this structure:
 - Primary: `#2f9e44` / `#ebfbee`
 - Use `strokeStyle: "dashed"` for connections
 
-## 📚 Icon Libraries (305 Components Total)
+## Icon Libraries (305 Components Total)
 
-Professional icons are available in `.excalidrawlib` files in the `data/` directory:
+Professional icons are available in `.excalidrawlib` files in the `assets/` directory:
 
 | Library | Components | Content |
 |---------|------------|---------|
@@ -282,19 +242,13 @@ Professional icons are available in `.excalidrawlib` files in the `data/` direct
 | `system-design-template.excalidrawlib` | 8 | Pre-built templates (steps, flow, db, etc.) |
 | `software-architecture.excalidrawlib` | 7 | Software architecture components |
 
-Search for library documentation:
-```bash
-python3 scripts/query_reference.py --category libraries
-python3 scripts/query_reference.py "aws icons"
-```
-
 ### Using Library Components
 
 Library files contain element arrays that can be embedded directly into your diagram. Each library item is an array of Excalidraw elements that form a component.
 
 To use: Parse the library JSON, find the component you need, adjust positions, and include in your diagram's elements array.
 
-## 🏗️ Layout Guidelines
+## Layout Guidelines
 
 ### Architecture Diagram Layout
 
@@ -330,7 +284,7 @@ Radial layout from center:
 - Child nodes at radius 250px
 - Distribute evenly using angle calculations
 
-## 📝 Complete Example
+## Complete Example
 
 ```json
 {
@@ -418,43 +372,14 @@ Radial layout from center:
 }
 ```
 
-## 💾 Output
+## Output
 
 Save your diagram as a `.excalidraw` or `.json` file. It can be:
 - Imported directly into [excalidraw.com](https://excalidraw.com)
 - Embedded in documentation or web apps
 - Converted to PNG/SVG using Excalidraw's export features
 
-## 🛠️ Helper Scripts (Optional)
-
-The `scripts/` directory contains optional helper utilities:
-
-| Script | Purpose |
-|--------|---------|
-| `query_reference.py` | Search the Excalidraw reference database |
-| `library_manager.py` | Load icons from .excalidrawlib files, get component colors |
-| `analyze_python_project.py` | Analyze Python projects to extract architecture info |
-
-These are optional tools - you can generate diagrams directly using the JSON schema above.
-
-### Example: Using library_manager.py
-
-```python
-from library_manager import LibraryManager, get_component_colors
-
-# Get colors for a component type
-colors = get_component_colors("database")
-# Returns: {"stroke": "#7c3aed", "bg": "#ede9fe"}
-
-# Load library components
-manager = LibraryManager()
-manager.load_libraries()
-component = manager.find_component("redis")
-if component:
-    elements = component.instantiate(x=100, y=200, scale=1.0)
-```
-
-## 🧠 Tips for AI Agents
+## Tips for AI Agents
 
 1. **Generate unique IDs**: Use UUIDs or sequential IDs for each element
 2. **Group related elements**: Use `groupIds` to keep shapes and their labels together
