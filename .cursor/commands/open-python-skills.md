@@ -6,17 +6,17 @@ Search and use Python backend best practices from the knowledge base.
 
 1. Search knowledge database:
    ```bash
-   python3 .shared/scripts/knowledge_db.py "{{query}}"
+   python3 .shared/python-backend/scripts/knowledge_db.py "{{query}}"
    ```
 
 2. Filter by category:
    ```bash
-   python3 .shared/scripts/knowledge_db.py "{{query}}" --category {{category}}
+   python3 .shared/python-backend/scripts/knowledge_db.py "{{query}}" --category {{category}}
    ```
 
 3. Get full entry with code examples:
    ```bash
-   python3 .shared/scripts/knowledge_db.py --get {{entry-id}}
+   python3 .shared/python-backend/scripts/knowledge_db.py --get {{entry-id}}
    ```
 
 ## Available Categories
@@ -25,7 +25,7 @@ Use `--list-categories` to discover all categories.
 
 ## Knowledge Database
 
-- `.shared/data/*.json` (multiple databases; incremental and searchable)
+- `.shared/python-backend/data/*.json` (multiple databases; incremental and searchable)
 
 ## Examples
 

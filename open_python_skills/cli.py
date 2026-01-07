@@ -193,8 +193,29 @@ Python type checking with ty (Astral's ultra-fast type checker).
 
 ## Instructions
 
+1. First, run `ty check .` to get all type errors
+2. Create a TODO list of all errors to fix, grouped by file
+3. Work through the TODO list one by one, marking each as complete
+4. After fixing each error, verify with `ty check <file>` before moving to the next
+5. Continue until all TODOs are complete
+
 Read the skill documentation for ty usage:
 - @.shared/ty-skills/SKILL.md
+
+## Workflow
+
+When the user asks to fix type errors:
+
+1. **Scan**: Run `ty check .` or `ty check <path>` to identify all errors
+2. **Plan**: Create a structured TODO list:
+   - Group errors by file
+   - Prioritize: imports → type annotations → complex patterns
+   - Note the error code (e.g., `unresolved-import`, `invalid-argument-type`)
+3. **Fix**: For each TODO item:
+   - Read the relevant reference doc for that error type
+   - Apply the fix
+   - Mark TODO as complete
+4. **Verify**: Run `ty check` again to confirm all errors are resolved
 
 ## References
 
@@ -206,7 +227,8 @@ Read the skill documentation for ty usage:
 
 ## Examples
 
-- `/ty-check` - Get help with Python type checking
+- `/ty-check` - Scan and fix all type errors with TODO tracking
+- `/ty-check src/` - Fix type errors in src/ directory
 - `/ty-check how to fix unresolved-import error`
 - `/ty-check migrate from mypy to ty`
 """
@@ -358,16 +380,29 @@ python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "$ARGUMENTS"
     # Create .claude/commands/ty-check.md
     ty_cmd = commands_dir / "ty-check.md"
     ty_content = """---
-description: Python type checking with ty
-argument-hint: [question]
+description: Python type checking with ty - scan, create TODO list, fix systematically
+argument-hint: [path or question]
 ---
 
-Help with Python type checking using ty: $ARGUMENTS
+Fix type errors in: $ARGUMENTS
 
-Read the skill documentation:
+## Workflow
+
+1. **Scan**: Run `ty check .` or `ty check <path>` to identify all errors
+2. **Plan**: Create a structured TODO list:
+   - Group errors by file
+   - Prioritize: imports → type annotations → complex patterns
+   - Note the error code (e.g., `unresolved-import`, `invalid-argument-type`)
+3. **Fix**: For each TODO item:
+   - Read the relevant reference doc for that error type
+   - Apply the fix
+   - Mark TODO as complete
+4. **Verify**: Run `ty check` again to confirm all errors are resolved
+
+## Skill Documentation
 - @.shared/ty-skills/SKILL.md
 
-References available:
+## References
 - @.shared/ty-skills/references/typing_cheatsheet.md
 - @.shared/ty-skills/references/ty_rules_reference.md
 - @.shared/ty-skills/references/migration_guide.md

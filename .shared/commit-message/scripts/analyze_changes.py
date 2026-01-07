@@ -12,7 +12,6 @@ Usage:
 import argparse
 import json
 import subprocess
-import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from fnmatch import fnmatch
@@ -290,7 +289,7 @@ class GitAnalyzer:
         else:
             message = f"{commit_type}: {description}"
 
-        print(f"\nSuggested commit message:\n")
+        print("Suggested commit message:")
         print(f"  {message}")
         print(f"\nFiles ({len(changes)}):")
         for f in changes:

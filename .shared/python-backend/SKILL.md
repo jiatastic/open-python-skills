@@ -10,53 +10,16 @@ description: >
 
 # python-backend
 
-Searchable knowledge base for building production-ready Python backends.
+Production-ready Python backend patterns for FastAPI, SQLAlchemy, and Upstash.
 
-## Search Usage
+## When to Use This Skill
 
-```bash
-# Search knowledge database
-python3 .shared/scripts/knowledge_db.py "{query}"
-
-# Filter by category
-python3 .shared/scripts/knowledge_db.py "{query}" --category {category}
-
-# Get full entry with code examples
-python3 .shared/scripts/knowledge_db.py --get {entry-id}
-
-# List all categories
-python3 .shared/scripts/knowledge_db.py --list-categories
-
-# List all tags
-python3 .shared/scripts/knowledge_db.py --list-tags
-```
-
-## Available Categories
-
-- `architecture` - Project structure, domain-driven design
-- `async` - Async/await patterns, event loop, threadpool
-- `pydantic` - Validation, schemas, BaseSettings
-- `dependencies` - Dependency injection, chaining, caching
-- `api` - REST conventions, documentation
-- `database` - SQLAlchemy, naming conventions, migrations
-- `testing` - Async test client, pytest
-- `tooling` - Ruff, linting, formatting
-- `upstash` - Redis caching, rate limiting, QStash jobs
-- `security` - JWT/OAuth2, password hashing, API keys, CORS
-- `template` - Project templates, architecture scaffolding
-- `deslop` - AI code cleanup, refactoring
-
-## Knowledge Databases
-
-Located in `.shared/data/` (loaded automatically by `knowledge_db.py`):
-- `fastapi_best_practices.json` - FastAPI patterns
-- `upstash_patterns.json` - Redis/QStash integration
-- `security_patterns.json` - Auth/security patterns
-- `database_patterns.json` - SQLAlchemy/Alembic patterns
-- `api_patterns.json` - API design patterns
-- `perf_patterns.json` - Performance patterns
-- `template_patterns.json` - Project templates
-- `deslop_patterns.json` - Code cleanup patterns
+- Building REST APIs with FastAPI
+- Implementing JWT/OAuth2 authentication
+- Setting up SQLAlchemy async databases
+- Integrating Redis/Upstash caching and rate limiting
+- Refactoring AI-generated Python code
+- Designing API patterns and project structure
 
 ## Core Principles
 
@@ -65,3 +28,133 @@ Located in `.shared/data/` (loaded automatically by `knowledge_db.py`):
 3. **Dependency injection** - Use FastAPI's Depends()
 4. **Fail fast** - Validate early, use HTTPException
 5. **Security by default** - Never trust user input
+
+## Quick Patterns
+
+### Project Structure
+
+```
+src/
+├── auth/
+│   ├── router.py      # endpoints
+│   ├── schemas.py     # pydantic models
+│   ├── models.py      # db models
+│   ├── service.py     # business logic
+│   └── dependencies.py
+├── posts/
+│   └── ...
+├── config.py
+├── database.py
+└── main.py
+```
+
+### Async Routes
+
+```python
+# BAD - blocks event loop
+@router.get("/")
+async def bad():
+    time.sleep(10)  # Blocking!
+
+# GOOD - runs in threadpool
+@router.get("/")
+def good():
+    time.sleep(10)  # OK in sync function
+
+# BEST - non-blocking
+@router.get("/")
+async def best():
+    await asyncio.sleep(10)  # Non-blocking
+```
+
+### Pydantic Validation
+
+```python
+from pydantic import BaseModel, EmailStr, Field
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str = Field(min_length=3, max_length=50, pattern="^[a-zA-Z0-9_]+$")
+    age: int = Field(ge=18)
+```
+
+### Dependency Injection
+
+```python
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
+    payload = decode_token(token)
+    user = await get_user(payload["sub"])
+    if not user:
+        raise HTTPException(401, "User not found")
+    return user
+
+@router.get("/me")
+async def get_me(user: User = Depends(get_current_user)):
+    return user
+```
+
+### SQLAlchemy Async
+
+```python
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
+engine = create_async_engine(DATABASE_URL, pool_pre_ping=True)
+SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
+
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
+    async with SessionLocal() as session:
+        yield session
+```
+
+### Redis Caching
+
+```python
+from upstash_redis import Redis
+
+redis = Redis.from_env()
+
+@app.get("/data/{id}")
+def get_data(id: str):
+    cached = redis.get(f"data:{id}")
+    if cached:
+        return cached
+    data = fetch_from_db(id)
+    redis.setex(f"data:{id}", 600, data)
+    return data
+```
+
+### Rate Limiting
+
+```python
+from upstash_ratelimit import Ratelimit, SlidingWindow
+
+ratelimit = Ratelimit(
+    redis=Redis.from_env(),
+    limiter=SlidingWindow(max_requests=10, window=60),
+)
+
+@app.get("/api/resource")
+def protected(request: Request):
+    result = ratelimit.limit(request.client.host)
+    if not result.allowed:
+        raise HTTPException(429, "Rate limit exceeded")
+    return {"data": "..."}
+```
+
+## Reference Documents
+
+For detailed patterns, see:
+
+| Document | Content |
+|----------|---------|
+| `references/fastapi_patterns.md` | Project structure, async, Pydantic, dependencies, testing |
+| `references/security_patterns.md` | JWT, OAuth2, password hashing, CORS, API keys |
+| `references/database_patterns.md` | SQLAlchemy async, transactions, eager loading, migrations |
+| `references/upstash_patterns.md` | Redis, rate limiting, QStash background jobs |
+
+## Resources
+
+- [FastAPI Documentation](https://fastapi.tiangolo.com/)
+- [SQLAlchemy 2.0 Documentation](https://docs.sqlalchemy.org/)
+- [Upstash Documentation](https://upstash.com/docs)
+- [Pydantic Documentation](https://docs.pydantic.dev/)

@@ -1,74 +1,76 @@
 # Open Python Skills
 
-CLI tool to install AI coding skills to your projects. Currently includes:
-- **python-backend** - FastAPI, SQLAlchemy, Redis, security patterns
-- **commit-message** - Git commit message analysis and batch commit suggestions
-- **excalidraw-ai** - AI-powered Excalidraw diagram generator from text descriptions
-- **ty-skills** - Python type checking with ty (Astral's type checker)
+> 🧠 Supercharge your AI code editor with Python development skills
+
+One command to make Cursor / Claude Code / Windsurf / Kiro / Copilot understand FastAPI best practices, commit conventions, architecture diagrams, and type checking.
+
+## Why Use This?
+
+| Scenario | Before 😅 | After ✨ |
+|----------|-----------|----------|
+| Writing commits | `fix stuff` | `feat(auth): add JWT refresh token rotation` |
+| Drawing architecture | Spend 2 hours in draw.io | Describe it, AI generates Excalidraw |
+| Asking FastAPI questions | AI gives outdated answers | AI searches local knowledge base |
+| Type checking | `# type: ignore` everywhere | ty handles it, zero errors |
 
 ## Quick Start
 
 ```bash
-# Install all skills to your project (no pip install needed)
+# No pip install needed, just run with uvx
 uvx open-python-skills init --cursor      # Cursor
 uvx open-python-skills init --claude      # Claude Code
 uvx open-python-skills init --windsurf    # Windsurf
 uvx open-python-skills init --kiro        # Kiro
 uvx open-python-skills init --copilot     # GitHub Copilot
-uvx open-python-skills init --all         # All IDEs
+uvx open-python-skills init --all         # All of them!
 ```
 
 ## Available Skills
 
-| Skill | Description |
-|-------|-------------|
-| `python-backend` | FastAPI, SQLAlchemy, Redis, security, performance patterns |
-| `commit-message` | Analyze git changes and generate conventional commit messages |
-| `excalidraw-ai` | Generate Excalidraw diagrams from natural language descriptions |
-| `ty-skills` | Python type checking with ty, migration guides, typing patterns |
+| Skill | What It Does |
+|-------|--------------|
+| `python-backend` | FastAPI + SQLAlchemy + Redis + Security patterns |
+| `commit-message` | Analyze git changes, generate conventional commits |
+| `excalidraw-ai` | Generate diagrams from natural language |
+| `ty-skills` | Complete guide for Astral's ty type checker |
 
-## What It Does
+---
 
-Running `init` copies skill files to your project. All IDEs use the same `.shared/` directory for consistent skill content:
+## Skill Details
 
-```
-your-project/
-├── .shared/                      # Skills (same for all IDEs)
-│   ├── python-backend/
-│   │   ├── SKILL.md
-│   │   ├── data/*.json
-│   │   └── scripts/
-│   ├── commit-message/
-│   ├── excalidraw-ai/
-│   └── ty-skills/
-├── .cursor/commands/             # (if --cursor)
-├── .claude/                      # (if --claude)
-│   ├── CLAUDE.md
-│   └── commands/
-├── .windsurf/rules.md            # (if --windsurf)
-├── .kiro/rules.md                # (if --kiro)
-└── .github/copilot/instructions.md  # (if --copilot)
-```
+<details>
+<summary><b>🔧 python-backend</b> — Python Backend Knowledge Base</summary>
 
-## Skills Overview
+### Includes
+- 🚀 FastAPI best practices
+- 🔐 Security patterns (JWT, CORS, Rate Limiting)
+- 🗄️ SQLAlchemy database patterns
+- ⚡ Redis / Upstash caching strategies
+- 📊 Performance optimization tips
 
-### python-backend
-
-Searchable knowledge base for Python backend development.
+### Usage
 
 ```bash
-# Search knowledge database
+# Search knowledge base
 python3 .shared/python-backend/scripts/knowledge_db.py "jwt authentication"
 
 # Filter by category
 python3 .shared/python-backend/scripts/knowledge_db.py "caching" --category upstash
 ```
 
-**Categories:** `fastapi`, `security`, `database`, `upstash`, `performance`, `api`, `deslop`, `template`
+**Categories:** `fastapi` `security` `database` `upstash` `performance` `api` `template`
 
-### commit-message
+</details>
 
-Analyze git changes and generate context-aware commit messages.
+<details>
+<summary><b>📝 commit-message</b> — Smart Git Commit Generator</summary>
+
+### Features
+- ✅ Conventional Commits format (`feat`, `fix`, `refactor`, etc.)
+- ✅ Auto-grouping by directory/module
+- ✅ Batch commit suggestions for large changesets
+
+### Usage
 
 ```bash
 # Analyze all changes
@@ -81,14 +83,17 @@ python3 .shared/commit-message/scripts/analyze_changes.py --batch
 python3 .shared/commit-message/scripts/analyze_changes.py --generate "src/*.py"
 ```
 
-**Features:**
-- Conventional commit format (`feat`, `fix`, `refactor`, `docs`, etc.)
-- Automatic grouping by directory/module
-- Batch commit suggestions for large changesets
+</details>
 
-### excalidraw-ai
+<details>
+<summary><b>🎨 excalidraw-ai</b> — AI Diagram Generator</summary>
 
-Generate Excalidraw diagrams from natural language descriptions.
+### Features
+- ✅ Natural language → Excalidraw JSON
+- ✅ Supports flowcharts, architecture diagrams, mindmaps
+- ✅ Can analyze project code to auto-generate architecture
+
+### Usage
 
 ```bash
 # Generate flowchart
@@ -97,23 +102,44 @@ python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "User Login -> Aut
 # Generate architecture diagram
 python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "API Gateway -> Microservice -> Database" --type architecture
 
-# Generate backend architecture from a Python project (context-aware)
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type architecture --output backend_arch.json
+# Analyze project and generate architecture
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type architecture --output arch.json
 ```
 
-**Types:** `flowchart`, `architecture`, `mindmap`
+**Types:** `flowchart` `architecture` `mindmap`
 
-### ty-skills
+</details>
 
-Python type checking guidance with ty (Astral's ultra-fast type checker).
+<details>
+<summary><b>🔍 ty-skills</b> — Python Type Checking Guide</summary>
 
-**References included:**
-- `typing_cheatsheet.md` - Quick reference for Python typing
-- `ty_rules_reference.md` - All ty error codes and fixes
-- `migration_guide.md` - Migrating from mypy/pyright to ty
-- `advanced_patterns.md` - Complex typing patterns
-- `common_errors.md` - Common errors and solutions
-- `editor_setup/` - Setup guides for VSCode, Cursor, Neovim
+### Includes
+- 📖 `typing_cheatsheet.md` — Quick reference for Python typing
+- 📖 `ty_rules_reference.md` — All ty error codes and fixes
+- 📖 `migration_guide.md` — Migrating from mypy/pyright
+- 📖 `advanced_patterns.md` — Advanced typing patterns
+- 📖 `common_errors.md` — Common errors and solutions
+- 📖 `editor_setup/` — VSCode / Cursor / Neovim setup guides
+
+</details>
+
+---
+
+## Project Structure After Install
+
+```
+your-project/
+├── .shared/                      # Skills (shared across all IDEs)
+│   ├── python-backend/
+│   ├── commit-message/
+│   ├── excalidraw-ai/
+│   └── ty-skills/
+├── .cursor/commands/             # Cursor commands
+├── .claude/                      # Claude Code config
+├── .windsurf/rules.md            # Windsurf rules
+├── .kiro/rules.md                # Kiro rules
+└── .github/copilot/instructions.md  # Copilot instructions
+```
 
 ## CLI Commands
 
