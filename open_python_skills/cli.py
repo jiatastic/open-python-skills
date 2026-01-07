@@ -184,7 +184,34 @@ Generate Excalidraw diagram from text.
 - `/excalidraw --project . --type architecture`
 """
     excalidraw_command.write_text(excalidraw_content, encoding="utf-8")
-    
+
+    # ty-skills command
+    ty_command = cursor_dir / "ty-check.md"
+    ty_content = """# ty-check
+
+Python type checking with ty (Astral's ultra-fast type checker).
+
+## Instructions
+
+Read the skill documentation for ty usage:
+- @.shared/ty-skills/SKILL.md
+
+## References
+
+- `@.shared/ty-skills/references/typing_cheatsheet.md` - Quick typing reference
+- `@.shared/ty-skills/references/ty_rules_reference.md` - All ty error codes
+- `@.shared/ty-skills/references/migration_guide.md` - Migrate from mypy/pyright
+- `@.shared/ty-skills/references/advanced_patterns.md` - Complex typing patterns
+- `@.shared/ty-skills/references/common_errors.md` - Common errors and fixes
+
+## Examples
+
+- `/ty-check` - Get help with Python type checking
+- `/ty-check how to fix unresolved-import error`
+- `/ty-check migrate from mypy to ty`
+"""
+    ty_command.write_text(ty_content, encoding="utf-8")
+
     print(f"OK: Installed to Cursor: {cursor_dir}/")
     return True
 
@@ -247,6 +274,7 @@ See @.shared/ty-skills/SKILL.md
 - `/commit-batch` - Suggest batch commits for current changes
 - `/commit-analyze` - Analyze git changes
 - `/excalidraw` - Generate diagram
+- `/ty-check` - Python type checking help
 """
     claude_md.write_text(claude_md_content, encoding="utf-8")
 
@@ -326,6 +354,27 @@ python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "$ARGUMENTS"
 ```
 """
     excalidraw_cmd.write_text(excalidraw_content, encoding="utf-8")
+
+    # Create .claude/commands/ty-check.md
+    ty_cmd = commands_dir / "ty-check.md"
+    ty_content = """---
+description: Python type checking with ty
+argument-hint: [question]
+---
+
+Help with Python type checking using ty: $ARGUMENTS
+
+Read the skill documentation:
+- @.shared/ty-skills/SKILL.md
+
+References available:
+- @.shared/ty-skills/references/typing_cheatsheet.md
+- @.shared/ty-skills/references/ty_rules_reference.md
+- @.shared/ty-skills/references/migration_guide.md
+- @.shared/ty-skills/references/advanced_patterns.md
+- @.shared/ty-skills/references/common_errors.md
+"""
+    ty_cmd.write_text(ty_content, encoding="utf-8")
 
     print(f"OK: Installed to Claude Code: {claude_md}, {commands_dir}/")
     return True
