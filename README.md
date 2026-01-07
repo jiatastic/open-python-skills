@@ -4,6 +4,7 @@ CLI tool to install AI coding skills to your projects. Currently includes:
 - **python-backend** - FastAPI, SQLAlchemy, Redis, security patterns
 - **commit-message** - Git commit message analysis and batch commit suggestions
 - **excalidraw-ai** - AI-powered Excalidraw diagram generator from text descriptions
+- **ty-skills** - Python type checking with ty (Astral's type checker)
 
 ## Quick Start
 
@@ -24,30 +25,35 @@ uvx open-python-skills init --all         # All IDEs
 | `python-backend` | FastAPI, SQLAlchemy, Redis, security, performance patterns |
 | `commit-message` | Analyze git changes and generate conventional commit messages |
 | `excalidraw-ai` | Generate Excalidraw diagrams from natural language descriptions |
+| `ty-skills` | Python type checking with ty, migration guides, typing patterns |
 
 ## What It Does
 
-Running `init` copies skill files to your project:
+Running `init` copies skill files to your project. Each IDE gets skills in the appropriate location:
 
+### Cursor / Windsurf / Kiro / Copilot
 ```
 your-project/
-├── .shared/
+├── .shared/                    # Skills data
 │   ├── python-backend/
-│   │   ├── SKILL.md
-│   │   ├── data/*.json
-│   │   └── scripts/knowledge_db.py
-│   └── commit-message/
-│       ├── SKILL.md
-│       ├── data/*.json
-│       └── scripts/analyze_changes.py
-│   └── excalidraw-ai/
-│       ├── SKILL.md
-│       ├── data/*.json
-│       └── scripts/excalidraw_generator.py
-├── .cursor/commands/     # (if --cursor)
-│   ├── kb-search.md
-│   └── commit-batch.md
-│   └── excalidraw.md
+│   ├── commit-message/
+│   ├── excalidraw-ai/
+│   └── ty-skills/
+├── .cursor/commands/           # (if --cursor)
+└── ...
+```
+
+### Claude Code
+```
+your-project/
+├── .claude/
+│   ├── CLAUDE.md               # Project instructions
+│   ├── skills/                 # Skills auto-discovered
+│   │   ├── python-backend/
+│   │   ├── commit-message/
+│   │   ├── excalidraw-ai/
+│   │   └── ty-skills/
+│   └── commands/               # Slash commands
 └── ...
 ```
 
@@ -103,6 +109,18 @@ python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type
 ```
 
 **Types:** `flowchart`, `architecture`, `mindmap`
+
+### ty-skills
+
+Python type checking guidance with ty (Astral's ultra-fast type checker).
+
+**References included:**
+- `typing_cheatsheet.md` - Quick reference for Python typing
+- `ty_rules_reference.md` - All ty error codes and fixes
+- `migration_guide.md` - Migrating from mypy/pyright to ty
+- `advanced_patterns.md` - Complex typing patterns
+- `common_errors.md` - Common errors and solutions
+- `editor_setup/` - Setup guides for VSCode, Cursor, Neovim
 
 ## CLI Commands
 
