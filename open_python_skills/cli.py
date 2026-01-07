@@ -35,7 +35,7 @@ SKILL_PATH = ".shared/SKILL.md"
 SKILL_DESCRIPTION = "Python backend development expertise for FastAPI, security, database, caching, and best practices"
 
 
-AVAILABLE_SKILLS = ["python-backend", "commit-message", "excalidraw-ai"]
+AVAILABLE_SKILLS = ["python-backend", "commit-message", "excalidraw-ai", "ty-skills"]
 
 
 def get_package_skill_path(skill_name: str = "python-backend") -> Path:
