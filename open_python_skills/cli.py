@@ -190,34 +190,15 @@ Generate Excalidraw diagram from text.
 
 
 def install_claude(base_path: Path) -> bool:
-    """Install skill to Claude Code (.claude/skills/ directory)."""
+    """Install skill to Claude Code.
+    
+    Skills are in .shared/ (same as other IDEs for consistency).
+    Commands are in .claude/commands/ per Claude Code docs.
+    CLAUDE.md provides project instructions.
+    """
     claude_dir = base_path / ".claude"
-    skills_dir = claude_dir / "skills"
     commands_dir = claude_dir / "commands"
-    skills_dir.mkdir(parents=True, exist_ok=True)
     commands_dir.mkdir(parents=True, exist_ok=True)
-
-    # Copy skills to .claude/skills/
-    for skill_name in AVAILABLE_SKILLS:
-        source_path = get_package_skill_path(skill_name)
-        if not source_path.exists():
-            print(f"WARNING: Skill '{skill_name}' not found at {source_path}")
-            continue
-
-        skill_dest = skills_dir / skill_name
-        skill_dest.mkdir(parents=True, exist_ok=True)
-
-        # Copy all files from skill
-        for item in source_path.iterdir():
-            dest_item = skill_dest / item.name
-            if item.is_dir():
-                if dest_item.exists():
-                    shutil.rmtree(dest_item)
-                shutil.copytree(item, dest_item)
-            else:
-                shutil.copy2(item, dest_item)
-
-        print(f"  Copied {skill_name} to {skill_dest}")
 
     # Create .claude/CLAUDE.md - project memory/instructions
     claude_md = claude_dir / "CLAUDE.md"
@@ -227,37 +208,37 @@ def install_claude(base_path: Path) -> bool:
 
 ## Available Skills
 
-Skills are installed in `.claude/skills/` and auto-discovered by Claude Code.
+Skills are installed in `.shared/` directory. Each skill has a SKILL.md with instructions.
 
 ### 1. python-backend
 Searchable knowledge base for Python backend development.
-See @.claude/skills/python-backend/SKILL.md
+See @.shared/python-backend/SKILL.md
 
 ```bash
-python3 .claude/skills/python-backend/scripts/knowledge_db.py "query"
-python3 .claude/skills/python-backend/scripts/knowledge_db.py --get <entry-id>
+python3 .shared/python-backend/scripts/knowledge_db.py "query"
+python3 .shared/python-backend/scripts/knowledge_db.py --get <entry-id>
 ```
 
 ### 2. commit-message
 Analyze git changes and generate commit messages.
-See @.claude/skills/commit-message/SKILL.md
+See @.shared/commit-message/SKILL.md
 
 ```bash
-python3 .claude/skills/commit-message/scripts/analyze_changes.py --batch
-python3 .claude/skills/commit-message/scripts/analyze_changes.py --analyze
+python3 .shared/commit-message/scripts/analyze_changes.py --batch
+python3 .shared/commit-message/scripts/analyze_changes.py --analyze
 ```
 
 ### 3. excalidraw-ai
 Generate diagrams from text.
-See @.claude/skills/excalidraw-ai/SKILL.md
+See @.shared/excalidraw-ai/SKILL.md
 
 ```bash
-python3 .claude/skills/excalidraw-ai/scripts/excalidraw_generator.py "description"
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "description"
 ```
 
 ### 4. ty-skills
 Python type checking with ty.
-See @.claude/skills/ty-skills/SKILL.md
+See @.shared/ty-skills/SKILL.md
 
 ## Commands
 
@@ -279,7 +260,7 @@ argument-hint: [query]
 Search the knowledge database for: $ARGUMENTS
 
 ```bash
-python3 .claude/skills/python-backend/scripts/knowledge_db.py "$ARGUMENTS"
+python3 .shared/python-backend/scripts/knowledge_db.py "$ARGUMENTS"
 ```
 
 If results are found, offer to get full details with `/kb-get <entry-id>`.
@@ -296,7 +277,7 @@ argument-hint: [entry-id]
 Get full details for entry: $ARGUMENTS
 
 ```bash
-python3 .claude/skills/python-backend/scripts/knowledge_db.py --get "$ARGUMENTS"
+python3 .shared/python-backend/scripts/knowledge_db.py --get "$ARGUMENTS"
 ```
 """
     kb_get.write_text(kb_get_content, encoding="utf-8")
@@ -310,7 +291,7 @@ description: Suggest batch commits for current changes
 Analyze git changes and suggest how to split into multiple commits:
 
 ```bash
-python3 .claude/skills/commit-message/scripts/analyze_changes.py --batch
+python3 .shared/commit-message/scripts/analyze_changes.py --batch
 ```
 
 Follow the suggested commit order to create clean, logical commits.
@@ -326,7 +307,7 @@ description: Analyze git changes
 Show all changed files with their status:
 
 ```bash
-python3 .claude/skills/commit-message/scripts/analyze_changes.py --analyze
+python3 .shared/commit-message/scripts/analyze_changes.py --analyze
 ```
 """
     commit_analyze.write_text(commit_analyze_content, encoding="utf-8")
@@ -341,12 +322,12 @@ argument-hint: [description]
 Generate diagram: $ARGUMENTS
 
 ```bash
-python3 .claude/skills/excalidraw-ai/scripts/excalidraw_generator.py "$ARGUMENTS"
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "$ARGUMENTS"
 ```
 """
     excalidraw_cmd.write_text(excalidraw_content, encoding="utf-8")
 
-    print(f"OK: Installed to Claude Code: {skills_dir}/, {commands_dir}/")
+    print(f"OK: Installed to Claude Code: {claude_md}, {commands_dir}/")
     return True
 
 

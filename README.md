@@ -29,32 +29,25 @@ uvx open-python-skills init --all         # All IDEs
 
 ## What It Does
 
-Running `init` copies skill files to your project. Each IDE gets skills in the appropriate location:
+Running `init` copies skill files to your project. All IDEs use the same `.shared/` directory for consistent skill content:
 
-### Cursor / Windsurf / Kiro / Copilot
 ```
 your-project/
-├── .shared/                    # Skills data
+├── .shared/                      # Skills (same for all IDEs)
 │   ├── python-backend/
+│   │   ├── SKILL.md
+│   │   ├── data/*.json
+│   │   └── scripts/
 │   ├── commit-message/
 │   ├── excalidraw-ai/
 │   └── ty-skills/
-├── .cursor/commands/           # (if --cursor)
-└── ...
-```
-
-### Claude Code
-```
-your-project/
-├── .claude/
-│   ├── CLAUDE.md               # Project instructions
-│   ├── skills/                 # Skills auto-discovered
-│   │   ├── python-backend/
-│   │   ├── commit-message/
-│   │   ├── excalidraw-ai/
-│   │   └── ty-skills/
-│   └── commands/               # Slash commands
-└── ...
+├── .cursor/commands/             # (if --cursor)
+├── .claude/                      # (if --claude)
+│   ├── CLAUDE.md
+│   └── commands/
+├── .windsurf/rules.md            # (if --windsurf)
+├── .kiro/rules.md                # (if --kiro)
+└── .github/copilot/instructions.md  # (if --copilot)
 ```
 
 ## Skills Overview
