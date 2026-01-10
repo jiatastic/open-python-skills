@@ -22,6 +22,7 @@ import json
 import shutil
 import sys
 from pathlib import Path
+from typing import cast
 
 try:
     from importlib.resources import files as importlib_files
@@ -35,13 +36,29 @@ SKILL_PATH = ".shared/SKILL.md"
 SKILL_DESCRIPTION = "Python backend development expertise for FastAPI, security, database, caching, and best practices"
 
 
-AVAILABLE_SKILLS = ["python-backend", "commit-message", "excalidraw-ai", "ty-skills"]
+AVAILABLE_SKILLS = [
+    "python-backend",
+    "commit-message",
+    "excalidraw-ai",
+    "ty-skills",
+    "unit-testing",
+    "docker-builder",
+    "web-scraping",
+    "api-testing",
+    "linting",
+    "formatting",
+    "observability",
+    "error-handling",
+    "marimo-notebook",
+    "pydantic",
+]
 
 
 def get_package_skill_path(skill_name: str = "python-backend") -> Path:
     """Get path to bundled skill files in package."""
     try:
-        return Path(importlib_files("open_python_skills") / skill_name)
+        package_root = cast(Path, importlib_files("open_python_skills"))
+        return package_root / skill_name
     except TypeError:
         # importlib_files may fail if package not properly installed
         return Path(__file__).parent / skill_name

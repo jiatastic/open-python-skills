@@ -2,18 +2,16 @@
 
 > 🧠 Supercharge your AI code editor with Python development skills
 
-One command to make Cursor / Claude Code / Windsurf / Kiro / Copilot understand FastAPI best practices, commit conventions, architecture diagrams, and type checking.
+One command makes Cursor / Claude Code / Windsurf / Kiro / Copilot understand FastAPI best practices, commit conventions, architecture diagrams, and Python type checking.
 
-## Why Use This?
+## Why This Exists
 
-| Scenario | Before 😅 | After ✨ |
-|----------|-----------|----------|
-| Writing commits | `fix stuff` | `feat(auth): add JWT refresh token rotation` |
-| Drawing architecture | Spend 2 hours in draw.io | Describe it, AI generates Excalidraw |
-| Asking FastAPI questions | AI gives outdated answers | AI searches local knowledge base |
-| Type checking | `# type: ignore` everywhere | ty handles it, zero errors |
+- **Faster answers**: local knowledge beats generic internet snippets.
+- **Better commits**: structured Conventional Commits without guesswork.
+- **Instant diagrams**: describe architecture, get Excalidraw JSON.
+- **Type safety**: practical guides for Astral's `ty` type checker.
 
-## Quick Start
+## Quick Start (Recommended)
 
 ```bash
 # No pip install needed, just run with uvx
@@ -25,16 +23,59 @@ uvx open-python-skills init --copilot     # GitHub Copilot
 uvx open-python-skills init --all         # All of them!
 ```
 
+## Install Options
+
+```bash
+# Install globally
+pip install open-python-skills
+
+# Then initialize in your project
+open-python-skills init --cursor
+```
+
 ## Available Skills
 
 | Skill | What It Does |
 |-------|--------------|
-| `python-backend` | FastAPI + SQLAlchemy + Redis + Security patterns |
-| `commit-message` | Analyze git changes, generate conventional commits |
-| `excalidraw-ai` | Generate diagrams from natural language |
+| `python-backend` | FastAPI + SQLAlchemy + Redis + security patterns |
+| `commit-message` | Analyze git changes, generate Conventional Commits |
+| `excalidraw-ai` | Generate Excalidraw diagrams from text |
 | `ty-skills` | Complete guide for Astral's ty type checker |
 
----
+## Common Commands
+
+```bash
+open-python-skills init [--cursor|--claude|--windsurf|--kiro|--copilot|--all]
+open-python-skills search "query"
+open-python-skills get <entry-id>
+open-python-skills categories
+open-python-skills stats
+```
+
+## Example Usage
+
+```bash
+# Search FastAPI patterns
+open-python-skills search "jwt authentication"
+
+# Get a specific entry
+open-python-skills get fastapi-013
+
+# List categories
+open-python-skills categories
+
+# Generate batch commit suggestions
+python3 .shared/commit-message/scripts/analyze_changes.py --batch
+
+# Generate an architecture diagram
+python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "API Gateway -> Service -> DB" --type architecture
+```
+
+## How It Works
+
+1. The package ships bundled skills inside `open_python_skills/`.
+2. `open-python-skills init ...` copies them into `.shared/` in your project.
+3. It also writes IDE-specific command/rule files (Cursor, Claude, Windsurf, Kiro, Copilot).
 
 ## Skill Details
 
@@ -43,7 +84,7 @@ uvx open-python-skills init --all         # All of them!
 
 ### Includes
 - 🚀 FastAPI best practices
-- 🔐 Security patterns (JWT, CORS, Rate Limiting)
+- 🔐 Security patterns (JWT, CORS, rate limiting)
 - 🗄️ SQLAlchemy database patterns
 - ⚡ Redis / Upstash caching strategies
 - 📊 Performance optimization tips
@@ -51,10 +92,7 @@ uvx open-python-skills init --all         # All of them!
 ### Usage
 
 ```bash
-# Search knowledge base
 python3 .shared/python-backend/scripts/knowledge_db.py "jwt authentication"
-
-# Filter by category
 python3 .shared/python-backend/scripts/knowledge_db.py "caching" --category upstash
 ```
 
@@ -73,13 +111,8 @@ python3 .shared/python-backend/scripts/knowledge_db.py "caching" --category upst
 ### Usage
 
 ```bash
-# Analyze all changes
 python3 .shared/commit-message/scripts/analyze_changes.py --analyze
-
-# Get batch commit suggestions
 python3 .shared/commit-message/scripts/analyze_changes.py --batch
-
-# Generate message for specific files
 python3 .shared/commit-message/scripts/analyze_changes.py --generate "src/*.py"
 ```
 
@@ -96,13 +129,8 @@ python3 .shared/commit-message/scripts/analyze_changes.py --generate "src/*.py"
 ### Usage
 
 ```bash
-# Generate flowchart
 python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "User Login -> Auth -> Access Data" --type flowchart
-
-# Generate architecture diagram
 python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "API Gateway -> Microservice -> Database" --type architecture
-
-# Analyze project and generate architecture
 python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type architecture --output arch.json
 ```
 
@@ -123,8 +151,6 @@ python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type
 
 </details>
 
----
-
 ## Project Structure After Install
 
 ```
@@ -141,15 +167,16 @@ your-project/
 └── .github/copilot/instructions.md  # Copilot instructions
 ```
 
-## CLI Commands
+## FAQ
 
-```bash
-open-python-skills init [--cursor|--claude|--windsurf|--all]  # Install skills
-open-python-skills search "query"                              # Search knowledge
-open-python-skills get <entry-id>                              # Get full entry
-open-python-skills categories                                  # List categories
-open-python-skills stats                                       # Show statistics
-```
+**Where is the knowledge stored?**
+All skill data lives in `.shared/<skill>/` after installation.
+
+**How do I update the skills?**
+Re-run `open-python-skills init --all` in your project.
+
+**Can I install to just one IDE?**
+Yes—use a single flag like `--cursor` or `--claude`.
 
 ## Requirements
 
