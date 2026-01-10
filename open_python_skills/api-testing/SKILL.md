@@ -7,33 +7,76 @@ description: >
 
 # api-testing
 
-Progressive API testing with OpenAPI schemas and schemathesis.
+OpenAPI-driven API testing with Schemathesis for schema validation, fuzzing, and CI reporting.
+
+## Overview
+
+Schemathesis reads OpenAPI schemas (local or remote) and generates tests that validate API behavior. It supports authentication, different phases (examples and fuzzing), concurrency, and test reports.
+
+## When to Use
+
+- You already have OpenAPI specs and want coverage
+- You need fuzzing or schema-driven tests
+- You want CI-friendly reports (JUnit)
+
+## When Not to Use
+
+- No schema exists (generate one first)
+- You need UI/browser tests
 
 ## Quick Start
 
-- Install: `uv pip install schemathesis`
-- Run: `schemathesis run ./openapi.yaml --url https://api.example.com`
+```bash
+uv pip install schemathesis
+schemathesis run https://api.example.com/openapi.json
+schemathesis run ./openapi.yaml --url https://api.example.com
+```
 
 ## Core Patterns
 
-1. **Schema-first**: keep OpenAPI synced to code
-2. **Auth headers**: pass tokens in CLI/config
-3. **CI reports**: JUnit output for pipelines
-4. **Safe coverage**: avoid destructive endpoints by tag
+1. **Schema-first**: keep OpenAPI synced to code.
+2. **Auth headers**: pass tokens for protected endpoints.
+3. **Phases**: use `--phases examples,fuzzing`.
+4. **Concurrency**: scale with `--workers`.
+5. **Rate limits**: throttle with config `rate-limit`.
+6. **CI reports**: `--report junit --report-dir ./reports`.
+7. **Reproducible runs**: set `--seed`.
 
-## Advanced
+## CLI Examples
 
-- Phases: `--phases examples,fuzzing`
-- Rate limiting: `--rate-limit 100/m`
-- Reproducible runs: `--seed 42`
+```bash
+# Auth header
+schemathesis run https://api.example.com/openapi.json \
+  --header "Authorization: Bearer $TOKEN"
 
-## Pitfalls
+# Examples + fuzzing
+schemathesis run ./openapi.yaml --url https://api.example.com \
+  --phases examples,fuzzing
 
-- Stale schemas causing false failures
-- Unbounded fuzzing without timeouts
-- Flaky endpoints with nondeterministic data
+# Concurrency
+schemathesis run ./openapi.yaml --url https://api.example.com --workers 4
+
+# JUnit report
+schemathesis run ./openapi.yaml --url https://api.example.com \
+  --report junit --report-dir ./reports
+```
+
+## Configuration
+
+Use config to rate-limit tests:
+
+```toml
+rate-limit = "100/m"
+```
+
+## Troubleshooting
+
+- **Schema mismatch**: regenerate OpenAPI from code
+- **Auth failures**: confirm headers or basic auth
+- **Flaky endpoints**: isolate destructive endpoints
+- **Slow runs**: limit phases or reduce workers
 
 ## References
 
-- `references/quickstart.md`
-- `references/pitfalls.md`
+- https://schemathesis.readthedocs.io/
+- https://github.com/schemathesis/schemathesis

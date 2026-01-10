@@ -4,10 +4,17 @@
 
 - **Multiple formatters** fighting each other
 - **Inconsistent line length** across tools
-- **Formatting in CI only** with no local check
+- **Formatting only in CI** without local checks
 
 ## Fix Patterns
 
-- Pick one formatter
-- Mirror CI locally
-- Use a pre-commit hook
+- Choose one formatter (Black or Ruff)
+- Align line length in `pyproject.toml`
+- Add pre-commit hooks for local enforcement
+
+## Example: Black Config
+
+```toml
+[tool.black]
+line-length = 88
+```

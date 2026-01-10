@@ -1,6 +1,6 @@
 # Unit Testing Quickstart
 
-## Minimal Setup
+## Install
 
 ```bash
 uv pip install pytest
@@ -28,10 +28,29 @@ def test_addition():
 ## Run
 
 ```bash
+pytest
 pytest -q
+pytest tests/test_example.py
 ```
 
-## Tips
+## Useful Flags
 
-- Keep tests small and focused
-- Prefer `pytest` fixtures over custom setup code
+- `-k "pattern"` to run a subset
+- `-m "not slow"` to filter by markers
+- `-x` to stop at first failure
+- `-ra` to show extra test summary info
+
+## Common Test Patterns
+
+```python
+import pytest
+
+@pytest.mark.parametrize("x,expected", [(1, 2), (2, 3)])
+def test_increment(x, expected):
+    assert x + 1 == expected
+
+
+def test_exception():
+    with pytest.raises(ValueError):
+        int("not-a-number")
+```

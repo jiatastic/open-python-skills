@@ -16,7 +16,7 @@ marimo edit notebook.py
 
 ```bash
 marimo run notebook.py
-python notebook.py
+python notebook.py --name Alice
 ```
 
 ## Export

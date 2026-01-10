@@ -1,4 +1,4 @@
-# API Testing Quickstart (OpenAPI)
+# API Testing Quickstart
 
 ## Install
 
@@ -19,8 +19,16 @@ schemathesis run https://api.example.com/openapi.json \
 schemathesis run ./openapi.yaml --url https://api.example.com
 ```
 
-## Useful Options
+## Common Options
 
-- `--max-examples 200` for more coverage
-- `--continue-on-failure` to keep going
-- `--report junit --report-dir ./reports` for CI
+- `--phases examples,fuzzing`
+- `--workers 4`
+- `--report junit --report-dir ./reports`
+- `--seed 42` for reproducibility
+
+## CI Example
+
+```bash
+schemathesis run ./openapi.yaml --url https://api.example.com \
+  --report junit --report-dir ./reports
+```

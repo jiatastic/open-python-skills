@@ -1,17 +1,36 @@
 # Linting Quickstart
 
-## Ruff Setup
+## Install
 
 ```bash
 uv pip install ruff
+```
+
+## Run Lint
+
+```bash
 ruff check .
 ```
 
-## Useful Commands
+## Auto-fix
 
-- Auto-fix: `ruff check . --fix`
-- Format + lint: `ruff format . && ruff check .`
+```bash
+ruff check . --fix
+```
 
-## Tip
+## CI Output
 
-Keep lint rules consistent with formatter to avoid churn.
+```bash
+ruff check . --output-format github
+```
+
+## Pre-commit Hook
+
+```yaml
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.10
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+```

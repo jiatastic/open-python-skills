@@ -7,33 +7,55 @@ description: >
 
 # marimo-notebook
 
-Progressive patterns for building reliable marimo notebooks.
+Reproducible, reactive notebooks built as Python files with CLI and export support.
+
+## Overview
+
+Marimo notebooks are plain `.py` files with reactive execution. You can run them as scripts, apps, or export to HTML.
+
+## When to Use
+
+- Replacing Jupyter notebooks with deterministic execution
+- Shipping analysis as a script or web app
+- Exporting reports to HTML
 
 ## Quick Start
 
-- Install: `uv pip install marimo`
-- Edit: `marimo edit notebook.py`
-- Run: `marimo run notebook.py`
+```bash
+uv pip install marimo
+marimo edit notebook.py
+marimo run notebook.py
+```
 
 ## Core Patterns
 
-1. **Reactive cells**: let dependencies drive execution
-2. **Deterministic runs**: avoid hidden state
-3. **Exportable outputs**: HTML or script
+1. **Reactive cells**: dependency-based execution.
+2. **No hidden state**: deterministic runs.
+3. **CLI args**: parameterize runs with `mo.cli_args()`.
+4. **Export**: `marimo export html` for reports.
 
-## Advanced
+## Example: CLI Args
 
-- Parameterize via `mo.cli_args()`
-- Gate expensive cells with `mo.stop()`
-- Use `marimo export` for reports
+```python
+import marimo as mo
 
-## Pitfalls
+args = mo.cli_args()
+name = args.get("name", "World")
+mo.md(f"# Hello, {name}!")
+```
 
-- Hidden state from globals
-- Expensive cells re-running
-- Non-descriptive notebook names
+## Example: Export
+
+```bash
+marimo export html notebook.py -o report.html -- --name Alice
+```
+
+## Troubleshooting
+
+- **Hidden state**: avoid globals; rely on cell outputs
+- **Expensive cells**: gate with `mo.stop()`
+- **Naming**: use descriptive filenames for reuse
 
 ## References
 
-- `references/quickstart.md`
-- `references/pitfalls.md`
+- https://docs.marimo.io/

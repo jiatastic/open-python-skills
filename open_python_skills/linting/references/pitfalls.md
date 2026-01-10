@@ -3,11 +3,19 @@
 ## Common Issues
 
 - **Conflicting tools**: formatter vs linter rules
-- **Overly strict rules**: slows adoption
-- **Ignoring warnings**: noise reduces trust
+- **Overly strict rules**: high noise, low adoption
+- **Excessive ignores**: hides real issues
 
 ## Fix Patterns
 
-- Start with minimal rule set
-- Fix high-signal warnings first
-- Use per-file ignores sparingly
+- Align linter with formatter defaults
+- Start with `E` and `F`, expand later
+- Keep ignores local and documented
+
+## Example: Reduce Noise
+
+```toml
+[tool.ruff.lint]
+select = ["E", "F"]
+ignore = ["E501"]
+```

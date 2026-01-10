@@ -2,9 +2,9 @@
 
 ## Patterns
 
-- Define error types by domain
-- Map exceptions to stable error codes
-- Return consistent response shape
+- Define domain error classes
+- Map exceptions to status codes
+- Return a stable error shape
 
 ## Example Response
 
@@ -18,6 +18,11 @@
 }
 ```
 
-## Tip
+## FastAPI Example
 
-Centralize exception handling in middleware or a base class.
+```python
+from fastapi import HTTPException
+
+if not user:
+    raise HTTPException(status_code=404, detail="User not found")
+```

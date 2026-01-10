@@ -2,12 +2,12 @@
 
 ## Common Issues
 
-- **Missing service name**: traces are hard to find
-- **No sampling config**: too much data in prod
-- **Silent errors**: exceptions not captured
+- **Missing service name**: traces hard to find
+- **High-cardinality attributes**: huge storage costs
+- **Late instrumentation**: middleware created before configure
 
 ## Fix Patterns
 
-- Set `LOGFIRE_SERVICE_NAME`
-- Use sampling for high-traffic services
-- Capture exceptions and error spans
+- Set `service_name` at startup
+- Keep attributes low-cardinality (IDs, not full payloads)
+- Call `configure()` before creating clients

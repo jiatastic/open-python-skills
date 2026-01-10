@@ -3,11 +3,11 @@
 ## Common Issues
 
 - **Leaking internals**: stack traces to clients
-- **Inconsistent codes**: hard to handle on client
-- **Swallowed exceptions**: silent failures
+- **Inconsistent codes**: clients cannot branch reliably
+- **Swallowed exceptions**: missing logs
 
 ## Fix Patterns
 
-- Use safe error messages
-- Define a single error schema
-- Log exceptions with context
+- Standardize error schema and codes
+- Use central exception handlers
+- Log with request context and IDs

@@ -2,12 +2,12 @@
 
 ## Common Issues
 
-- **Hidden state**: avoid globals, prefer cell outputs
-- **Expensive cells**: re-run too often
-- **Inconsistent names**: hard to trace dependencies
+- **Hidden state**: globals or side effects
+- **Expensive cells**: rerun too often
+- **Unnamed notebooks**: unclear dependency graphs
 
 ## Fix Patterns
 
-- Use explicit outputs from cells
+- Use explicit outputs between cells
 - Gate expensive work with `mo.stop()`
-- Keep descriptive file names
+- Keep notebooks small and well-named

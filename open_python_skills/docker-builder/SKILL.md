@@ -7,33 +7,74 @@ description: >
 
 # docker-builder
 
-Progressive Docker patterns for Python APIs.
+Production-grade Docker patterns for Python APIs with an emphasis on security and reproducibility.
+
+## Overview
+
+Use multi-stage builds, small base images, and deterministic installs to produce minimal, secure runtime images. Prioritize cache-friendly layer ordering and proper signal handling.
+
+## When to Use
+
+- Shipping FastAPI/Flask APIs to production
+- Reducing image size and build times
+- Standardizing container builds for teams
 
 ## Quick Start
 
-- Build: `docker build -t my-api .`
-- Run: `docker run -p 8000:8000 my-api`
+```bash
+docker build -t my-api .
+docker run -p 8000:8000 my-api
+```
 
 ## Core Patterns
 
-1. **Multi-stage builds**: separate build/runtime
-2. **Layer caching**: copy lock/config first
-3. **Non-root runtime**: safer containers
-4. **Signal handling**: use exec form CMD
+1. **Multi-stage builds**: separate build and runtime stages.
+2. **Layer caching**: copy lock files first.
+3. **Virtualenv in image**: isolate dependencies.
+4. **Non-root runtime**: reduce risk.
+5. **Exec-form CMD**: proper signal handling.
+6. **Healthchecks**: define liveness checks.
 
-## Advanced
+## Recommended Dockerfile (Multi-stage)
 
-- Distroless or slim images
-- Buildkit cache mounts
-- Healthchecks and readiness probes
+```Dockerfile
+# syntax=docker/dockerfile:1
+FROM python:3.13-alpine AS builder
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/app/venv/bin:$PATH"
+WORKDIR /app
+RUN python -m venv /app/venv
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-## Pitfalls
+FROM python:3.13-alpine
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/app/venv/bin:$PATH"
+WORKDIR /app
+COPY --from=builder /app/venv /app/venv
+COPY . .
+EXPOSE 8000
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
 
-- Large images with build deps
-- Cache busting on every change
-- Missing `PYTHONUNBUFFERED=1`
+## Compose (Local Dev)
+
+```yaml
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+```
+
+## Troubleshooting
+
+- **Large images**: use multi-stage and avoid build deps in final stage
+- **Slow builds**: maximize cache with lock-file-first ordering
+- **Signal issues**: use exec-form `CMD` or `ENTRYPOINT`
 
 ## References
 
-- `references/quickstart.md`
-- `references/pitfalls.md`
+- https://docs.docker.com/build/building/best-practices/
+- https://docs.docker.com/engine/

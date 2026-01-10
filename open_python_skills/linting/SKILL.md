@@ -7,30 +7,65 @@ description: >
 
 # linting
 
-Progressive linting patterns with ruff.
+Fast, opinionated linting with Ruff, designed as a drop-in replacement for Flake8 and friends.
+
+## Overview
+
+Ruff provides a single CLI for linting with optional auto-fix. It supports an extensive rule set and integrates cleanly with pre-commit and CI.
+
+## When to Use
+
+- Standardizing code quality
+- Enforcing consistent rules in CI
+- Replacing multiple tools (flake8, isort, pyupgrade)
 
 ## Quick Start
 
-- Install: `uv pip install ruff`
-- Run: `ruff check .`
+```bash
+uv pip install ruff
+ruff check .
+```
 
 ## Core Patterns
 
-1. **Fast feedback**: run in pre-commit or CI
-2. **Auto-fix**: use `--fix` for safe rules
-3. **Rule scoping**: start minimal, expand gradually
+1. **Start minimal**: enable `E` and `F`, then expand.
+2. **Auto-fix**: use `ruff check --fix` for safe rules.
+3. **Per-file ignores**: use sparingly for generated code.
+4. **CI integration**: `ruff check --output-format github`.
+5. **Single source of truth**: configure via `pyproject.toml`.
 
-## Advanced
+## Configuration (pyproject.toml)
 
-- Per-file ignores for generated code
-- Rule presets for security and complexity
+```toml
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = [".venv", "dist", "build"]
 
-## Pitfalls
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "UP", "SIM"]
+ignore = ["E501"]
+fixable = ["ALL"]
 
-- Conflicting formatter/linter rules
-- Excessive ignores that hide issues
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+```
+
+## Useful Commands
+
+```bash
+ruff check .
+ruff check . --fix
+ruff check . --diff
+ruff check . --output-format github
+```
+
+## Troubleshooting
+
+- **Rule conflicts**: align with formatter rules.
+- **Too strict**: start with small `select` list.
+- **Too many ignores**: use per-file ignores sparingly.
 
 ## References
 
-- `references/quickstart.md`
-- `references/pitfalls.md`
+- https://docs.astral.sh/ruff/
