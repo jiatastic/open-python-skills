@@ -10,6 +10,9 @@ Usage:
     open-python-skills init --copilot     # Install to GitHub Copilot
     open-python-skills init --antigravity # Install to Antigravity (.agent + .shared)
     open-python-skills init --all         # Install to all assistants
+    open-python-skills init --skills unit-testing,pydantic
+    open-python-skills init --skill unit-testing --skill pydantic
+    open-python-skills init --list-skills
     
     open-python-skills search "query"     # Search knowledge database
     open-python-skills get <entry-id>     # Get full entry
@@ -54,6 +57,33 @@ AVAILABLE_SKILLS = [
 ]
 
 
+def print_available_skills() -> None:
+    print("Available skills:")
+    for skill in AVAILABLE_SKILLS:
+        print(f"  - {skill}")
+
+
+def normalize_skills(skill_args: list[str] | None, skills_csv: str | None) -> list[str]:
+    skills: list[str] = []
+    if skills_csv:
+        skills.extend([s.strip() for s in skills_csv.split(",") if s.strip()])
+    if skill_args:
+        skills.extend(skill_args)
+
+    if not skills:
+        return list(AVAILABLE_SKILLS)
+
+    normalized: list[str] = []
+    seen = set()
+    for skill in skills:
+        if skill not in AVAILABLE_SKILLS:
+            raise ValueError(f"Unknown skill: {skill}")
+        if skill not in seen:
+            normalized.append(skill)
+            seen.add(skill)
+    return normalized
+
+
 def get_package_skill_path(skill_name: str = "python-backend") -> Path:
     """Get path to bundled skill files in package."""
     try:
@@ -70,7 +100,6 @@ def get_target_path() -> Path:
 
 
 def copy_shared_files(target_path: Path, skills: list[str] | None = None) -> bool:
-    """Copy .shared files to target project for all skills."""
     if skills is None:
         skills = AVAILABLE_SKILLS
 
@@ -103,14 +132,45 @@ def copy_shared_files(target_path: Path, skills: list[str] | None = None) -> boo
     return success
 
 
-def install_cursor(base_path: Path) -> bool:
+def copy_claude_skills(target_path: Path, skills: list[str]) -> bool:
+    dest_path = target_path / ".claude" / "skills"
+    dest_path.mkdir(parents=True, exist_ok=True)
+
+    success = True
+    for skill_name in skills:
+        source_path = get_package_skill_path(skill_name)
+
+        if not source_path.exists():
+            print(f"WARNING: Skill '{skill_name}' not found at {source_path}")
+            continue
+
+        skill_dest = dest_path / skill_name
+        skill_dest.mkdir(parents=True, exist_ok=True)
+
+        for item in source_path.iterdir():
+            dest_item = skill_dest / item.name
+            if item.is_dir():
+                if dest_item.exists():
+                    shutil.rmtree(dest_item)
+                shutil.copytree(item, dest_item)
+            else:
+                shutil.copy2(item, dest_item)
+
+        print(f"OK: Copied {skill_name} to {skill_dest}")
+
+    return success
+
+
+def install_cursor(base_path: Path, skills: list[str]) -> bool:
     """Install skill to Cursor IDE."""
     cursor_dir = base_path / ".cursor" / "commands"
     cursor_dir.mkdir(parents=True, exist_ok=True)
+    skills_set = set(skills)
     
-    # Main open-python-skills command
-    main_command = cursor_dir / "open-python-skills.md"
-    main_content = """# open-python-skills
+    if "python-backend" in skills_set:
+        # Main open-python-skills command
+        main_command = cursor_dir / "open-python-skills.md"
+        main_content = """# open-python-skills
 
 Search and use Python backend best practices from the knowledge base.
 
@@ -146,11 +206,12 @@ Use `--list-categories` to discover all categories.
 - `/open-python-skills pydantic validation`
 - `/open-python-skills database connection pooling`
 """
-    main_command.write_text(main_content, encoding="utf-8")
-    
-    # commit-message skill command
-    commit_command = cursor_dir / "commit-batch.md"
-    commit_content = """# commit-batch
+        main_command.write_text(main_content, encoding="utf-8")
+
+    if "commit-message" in skills_set:
+        # commit-message skill command
+        commit_command = cursor_dir / "commit-batch.md"
+        commit_content = """# commit-batch
 
 Analyze git changes and suggest batch commits.
 
@@ -175,11 +236,12 @@ Analyze git changes and suggest batch commits.
 
 - `/commit-batch` - Suggest how to split changes into commits
 """
-    commit_command.write_text(commit_content, encoding="utf-8")
-    
-    # excalidraw skill command
-    excalidraw_command = cursor_dir / "excalidraw.md"
-    excalidraw_content = """# excalidraw
+        commit_command.write_text(commit_content, encoding="utf-8")
+
+    if "excalidraw-ai" in skills_set:
+        # excalidraw skill command
+        excalidraw_command = cursor_dir / "excalidraw.md"
+        excalidraw_content = """# excalidraw
 
 Generate Excalidraw diagram from text.
 
@@ -200,11 +262,12 @@ Generate Excalidraw diagram from text.
 - `/excalidraw "User login flow" --type flowchart`
 - `/excalidraw --project . --type architecture`
 """
-    excalidraw_command.write_text(excalidraw_content, encoding="utf-8")
+        excalidraw_command.write_text(excalidraw_content, encoding="utf-8")
 
-    # ty-skills command
-    ty_command = cursor_dir / "ty-check.md"
-    ty_content = """# ty-check
+    if "ty-skills" in skills_set:
+        # ty-skills command
+        ty_command = cursor_dir / "ty-check.md"
+        ty_content = """# ty-check
 
 Python type checking with ty (Astral's ultra-fast type checker).
 
@@ -249,22 +312,85 @@ When the user asks to fix type errors:
 - `/ty-check how to fix unresolved-import error`
 - `/ty-check migrate from mypy to ty`
 """
-    ty_command.write_text(ty_content, encoding="utf-8")
+        ty_command.write_text(ty_content, encoding="utf-8")
 
     print(f"OK: Installed to Cursor: {cursor_dir}/")
     return True
 
 
-def install_claude(base_path: Path) -> bool:
-    """Install skill to Claude Code.
-    
-    Skills are in .shared/ (same as other IDEs for consistency).
-    Commands are in .claude/commands/ per Claude Code docs.
-    CLAUDE.md provides project instructions.
-    """
+def install_claude(base_path: Path, skills: list[str]) -> bool:
     claude_dir = base_path / ".claude"
     commands_dir = claude_dir / "commands"
     commands_dir.mkdir(parents=True, exist_ok=True)
+    skills_set = set(skills)
+
+    if not copy_claude_skills(base_path, skills):
+        return False
+
+    skill_list = "\n".join(f"- {skill}" for skill in skills)
+
+    sections: list[str] = []
+    if "python-backend" in skills_set:
+        sections.append(
+            """### python-backend
+Searchable knowledge base for Python backend development.
+See @.claude/skills/python-backend/SKILL.md
+
+```bash
+python3 .claude/skills/python-backend/scripts/knowledge_db.py \"query\"
+python3 .claude/skills/python-backend/scripts/knowledge_db.py --get <entry-id>
+```"""
+        )
+    if "commit-message" in skills_set:
+        sections.append(
+            """### commit-message
+Analyze git changes and generate commit messages.
+See @.claude/skills/commit-message/SKILL.md
+
+```bash
+python3 .claude/skills/commit-message/scripts/analyze_changes.py --batch
+python3 .claude/skills/commit-message/scripts/analyze_changes.py --analyze
+```"""
+        )
+    if "excalidraw-ai" in skills_set:
+        sections.append(
+            """### excalidraw-ai
+Generate diagrams from text.
+See @.claude/skills/excalidraw-ai/SKILL.md
+
+```bash
+python3 .claude/skills/excalidraw-ai/scripts/excalidraw_generator.py \"description\"
+```"""
+        )
+    if "ty-skills" in skills_set:
+        sections.append(
+            """### ty-skills
+Python type checking with ty.
+See @.claude/skills/ty-skills/SKILL.md"""
+        )
+
+    command_entries: list[str] = []
+    if "python-backend" in skills_set:
+        command_entries.extend(
+            [
+                "- `/kb-search` - Search python-backend knowledge base",
+                "- `/kb-get` - Get full entry by ID",
+            ]
+        )
+    if "commit-message" in skills_set:
+        command_entries.extend(
+            [
+                "- `/commit-batch` - Suggest batch commits for current changes",
+                "- `/commit-analyze` - Analyze git changes",
+            ]
+        )
+    if "excalidraw-ai" in skills_set:
+        command_entries.append("- `/excalidraw` - Generate diagram")
+    if "ty-skills" in skills_set:
+        command_entries.append("- `/ty-check` - Python type checking help")
+
+    commands_block = "\n".join(command_entries) if command_entries else "- No slash commands installed"
+    sections_block = "\n\n".join(sections) if sections else "No detailed sections available for this selection."
 
     # Create .claude/CLAUDE.md - project memory/instructions
     claude_md = claude_dir / "CLAUDE.md"
@@ -272,54 +398,24 @@ def install_claude(base_path: Path) -> bool:
 
 {SKILL_DESCRIPTION}
 
-## Available Skills
+## Installed Skills
 
-Skills are installed in `.shared/` directory. Each skill has a SKILL.md with instructions.
+{skill_list}
 
-### 1. python-backend
-Searchable knowledge base for Python backend development.
-See @.shared/python-backend/SKILL.md
+## Skill Details
 
-```bash
-python3 .shared/python-backend/scripts/knowledge_db.py "query"
-python3 .shared/python-backend/scripts/knowledge_db.py --get <entry-id>
-```
-
-### 2. commit-message
-Analyze git changes and generate commit messages.
-See @.shared/commit-message/SKILL.md
-
-```bash
-python3 .shared/commit-message/scripts/analyze_changes.py --batch
-python3 .shared/commit-message/scripts/analyze_changes.py --analyze
-```
-
-### 3. excalidraw-ai
-Generate diagrams from text.
-See @.shared/excalidraw-ai/SKILL.md
-
-```bash
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "description"
-```
-
-### 4. ty-skills
-Python type checking with ty.
-See @.shared/ty-skills/SKILL.md
+{sections_block}
 
 ## Commands
 
-- `/kb-search` - Search python-backend knowledge base
-- `/kb-get` - Get full entry by ID
-- `/commit-batch` - Suggest batch commits for current changes
-- `/commit-analyze` - Analyze git changes
-- `/excalidraw` - Generate diagram
-- `/ty-check` - Python type checking help
+{commands_block}
 """
     claude_md.write_text(claude_md_content, encoding="utf-8")
 
-    # Create .claude/commands/kb-search.md
-    kb_search = commands_dir / "kb-search.md"
-    kb_search_content = """---
+    if "python-backend" in skills_set:
+        # Create .claude/commands/kb-search.md
+        kb_search = commands_dir / "kb-search.md"
+        kb_search_content = """---
 description: Search python-backend knowledge base
 argument-hint: [query]
 ---
@@ -327,16 +423,16 @@ argument-hint: [query]
 Search the knowledge database for: $ARGUMENTS
 
 ```bash
-python3 .shared/python-backend/scripts/knowledge_db.py "$ARGUMENTS"
+python3 .claude/skills/python-backend/scripts/knowledge_db.py "$ARGUMENTS"
 ```
 
 If results are found, offer to get full details with `/kb-get <entry-id>`.
 """
-    kb_search.write_text(kb_search_content, encoding="utf-8")
+        kb_search.write_text(kb_search_content, encoding="utf-8")
 
-    # Create .claude/commands/kb-get.md
-    kb_get = commands_dir / "kb-get.md"
-    kb_get_content = """---
+        # Create .claude/commands/kb-get.md
+        kb_get = commands_dir / "kb-get.md"
+        kb_get_content = """---
 description: Get full entry by ID from knowledge base
 argument-hint: [entry-id]
 ---
@@ -344,44 +440,46 @@ argument-hint: [entry-id]
 Get full details for entry: $ARGUMENTS
 
 ```bash
-python3 .shared/python-backend/scripts/knowledge_db.py --get "$ARGUMENTS"
+python3 .claude/skills/python-backend/scripts/knowledge_db.py --get "$ARGUMENTS"
 ```
 """
-    kb_get.write_text(kb_get_content, encoding="utf-8")
+        kb_get.write_text(kb_get_content, encoding="utf-8")
 
-    # Create .claude/commands/commit-batch.md
-    commit_batch = commands_dir / "commit-batch.md"
-    commit_batch_content = """---
+    if "commit-message" in skills_set:
+        # Create .claude/commands/commit-batch.md
+        commit_batch = commands_dir / "commit-batch.md"
+        commit_batch_content = """---
 description: Suggest batch commits for current changes
 ---
 
 Analyze git changes and suggest how to split into multiple commits:
 
 ```bash
-python3 .shared/commit-message/scripts/analyze_changes.py --batch
+python3 .claude/skills/commit-message/scripts/analyze_changes.py --batch
 ```
 
 Follow the suggested commit order to create clean, logical commits.
 """
-    commit_batch.write_text(commit_batch_content, encoding="utf-8")
+        commit_batch.write_text(commit_batch_content, encoding="utf-8")
 
-    # Create .claude/commands/commit-analyze.md
-    commit_analyze = commands_dir / "commit-analyze.md"
-    commit_analyze_content = """---
+        # Create .claude/commands/commit-analyze.md
+        commit_analyze = commands_dir / "commit-analyze.md"
+        commit_analyze_content = """---
 description: Analyze git changes
 ---
 
 Show all changed files with their status:
 
 ```bash
-python3 .shared/commit-message/scripts/analyze_changes.py --analyze
+python3 .claude/skills/commit-message/scripts/analyze_changes.py --analyze
 ```
 """
-    commit_analyze.write_text(commit_analyze_content, encoding="utf-8")
+        commit_analyze.write_text(commit_analyze_content, encoding="utf-8")
 
-    # Create .claude/commands/excalidraw.md
-    excalidraw_cmd = commands_dir / "excalidraw.md"
-    excalidraw_content = """---
+    if "excalidraw-ai" in skills_set:
+        # Create .claude/commands/excalidraw.md
+        excalidraw_cmd = commands_dir / "excalidraw.md"
+        excalidraw_content = """---
 description: Generate Excalidraw diagram
 argument-hint: [description]
 ---
@@ -389,14 +487,15 @@ argument-hint: [description]
 Generate diagram: $ARGUMENTS
 
 ```bash
-python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "$ARGUMENTS"
+python3 .claude/skills/excalidraw-ai/scripts/excalidraw_generator.py "$ARGUMENTS"
 ```
 """
-    excalidraw_cmd.write_text(excalidraw_content, encoding="utf-8")
+        excalidraw_cmd.write_text(excalidraw_content, encoding="utf-8")
 
-    # Create .claude/commands/ty-check.md
-    ty_cmd = commands_dir / "ty-check.md"
-    ty_content = """---
+    if "ty-skills" in skills_set:
+        # Create .claude/commands/ty-check.md
+        ty_cmd = commands_dir / "ty-check.md"
+        ty_content = """---
 description: Python type checking with ty - scan, create TODO list, fix systematically
 argument-hint: [path or question]
 ---
@@ -417,16 +516,16 @@ Fix type errors in: $ARGUMENTS
 4. **Verify**: Run `ty check` again to confirm all errors are resolved
 
 ## Skill Documentation
-- @.shared/ty-skills/SKILL.md
+- @.claude/skills/ty-skills/SKILL.md
 
 ## References
-- @.shared/ty-skills/references/typing_cheatsheet.md
-- @.shared/ty-skills/references/ty_rules_reference.md
-- @.shared/ty-skills/references/migration_guide.md
-- @.shared/ty-skills/references/advanced_patterns.md
-- @.shared/ty-skills/references/common_errors.md
+- @.claude/skills/ty-skills/references/typing_cheatsheet.md
+- @.claude/skills/ty-skills/references/ty_rules_reference.md
+- @.claude/skills/ty-skills/references/migration_guide.md
+- @.claude/skills/ty-skills/references/advanced_patterns.md
+- @.claude/skills/ty-skills/references/common_errors.md
 """
-    ty_cmd.write_text(ty_content, encoding="utf-8")
+        ty_cmd.write_text(ty_content, encoding="utf-8")
 
     print(f"OK: Installed to Claude Code: {claude_md}, {commands_dir}/")
     return True
@@ -754,6 +853,7 @@ def main():
 Examples:
   open-python-skills init --all          Install to all AI assistants
   open-python-skills init --cursor       Install to Cursor only
+  open-python-skills init --skills unit-testing,pydantic
   open-python-skills search "redis"      Search for redis patterns
   open-python-skills get upstash-redis-init  Get full entry
   open-python-skills categories          List all categories
@@ -772,7 +872,10 @@ Examples:
     init_parser.add_argument("--copilot", action="store_true", help="Install to GitHub Copilot")
     init_parser.add_argument("--antigravity", action="store_true", help="Install to Antigravity")
     init_parser.add_argument("--all", action="store_true", help="Install to all assistants")
-    
+    init_parser.add_argument("--skill", action="append", help="Install a specific skill (repeatable)")
+    init_parser.add_argument("--skills", help="Comma-separated list of skills to install")
+    init_parser.add_argument("--list-skills", action="store_true", help="List available skills")
+
     # search command
     search_parser = subparsers.add_parser("search", help="Search knowledge database")
     search_parser.add_argument("query", help="Search query")
@@ -816,9 +919,20 @@ Examples:
     
     if args.command == "init":
         base_path = get_target_path()
+
+        if args.list_skills:
+            print_available_skills()
+            return
+
+        try:
+            selected_skills = normalize_skills(args.skill, args.skills)
+        except ValueError as exc:
+            print(f"ERROR: {exc}")
+            print("   Use --list-skills to see options.")
+            sys.exit(1)
         
         # First, copy .shared files
-        if not copy_shared_files(base_path):
+        if not copy_shared_files(base_path, selected_skills):
             sys.exit(1)
         
         success_count = 0
@@ -828,8 +942,8 @@ Examples:
         
         if args.all:
             installers = [
-                ("Cursor", install_cursor),
-                ("Claude Code", install_claude),
+                ("Cursor", lambda path: install_cursor(path, selected_skills)),
+                ("Claude Code", lambda path: install_claude(path, selected_skills)),
                 ("Windsurf", install_windsurf),
                 ("Kiro", install_kiro),
                 ("GitHub Copilot", install_copilot),
@@ -837,9 +951,9 @@ Examples:
             ]
         else:
             if args.cursor:
-                installers.append(("Cursor", install_cursor))
+                installers.append(("Cursor", lambda path: install_cursor(path, selected_skills)))
             if args.claude:
-                installers.append(("Claude Code", install_claude))
+                installers.append(("Claude Code", lambda path: install_claude(path, selected_skills)))
             if args.windsurf:
                 installers.append(("Windsurf", install_windsurf))
             if args.kiro:
@@ -849,6 +963,11 @@ Examples:
             if args.antigravity:
                 installers.append(("Antigravity", install_antigravity))
         
+        if "python-backend" not in selected_skills:
+            warning_targets = {"Windsurf", "Kiro", "GitHub Copilot"}
+            if any(name in warning_targets for name, _ in installers):
+                print("WARNING: Windsurf/Kiro/Copilot configs assume python-backend is installed.")
+
         if not installers:
             print("ERROR: No IDE specified!")
             print("   Use --cursor, --claude, --windsurf, --kiro, --copilot, --antigravity, or --all")

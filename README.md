@@ -56,6 +56,9 @@ open-python-skills init --cursor
 
 ```bash
 open-python-skills init [--cursor|--claude|--windsurf|--kiro|--copilot|--all]
+open-python-skills init --skills unit-testing,pydantic
+open-python-skills init --skill unit-testing --skill pydantic
+open-python-skills init --list-skills
 open-python-skills search "query"
 open-python-skills get <entry-id>
 open-python-skills categories
@@ -84,8 +87,8 @@ python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py "API Gateway -> Se
 ## How It Works
 
 1. The package ships bundled skills inside `open_python_skills/`.
-2. `open-python-skills init ...` copies them into `.shared/` in your project.
-3. It also writes IDE-specific command/rule files (Cursor, Claude, Windsurf, Kiro, Copilot).
+2. `open-python-skills init ...` copies them into `.shared/` and, for Claude Code, `.claude/skills/`.
+3. It also writes IDE-specific command/rule files (Cursor commands, Claude commands, Windsurf/Kiro/Copilot rules).
 
 ## Skill Details
 
@@ -165,13 +168,18 @@ python3 .shared/excalidraw-ai/scripts/excalidraw_generator.py --project . --type
 
 ```
 your-project/
-├── .shared/                      # Skills (shared across all IDEs)
+├── .shared/                      # Skills (shared across IDEs)
 │   ├── python-backend/
 │   ├── commit-message/
 │   ├── excalidraw-ai/
-│   └── ty-skills/
+│   ├── ty-skills/
+│   ├── unit-testing/
+│   └── ...
 ├── .cursor/commands/             # Cursor commands
-├── .claude/                      # Claude Code config
+├── .claude/commands/             # Claude commands
+├── .claude/skills/               # Claude Code skills
+│   ├── python-backend/
+│   └── ...
 ├── .windsurf/rules.md            # Windsurf rules
 ├── .kiro/rules.md                # Kiro rules
 └── .github/copilot/instructions.md  # Copilot instructions
