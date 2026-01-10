@@ -41,6 +41,16 @@ open-python-skills init --cursor
 | `commit-message` | Analyze git changes, generate Conventional Commits |
 | `excalidraw-ai` | Generate Excalidraw diagrams from text |
 | `ty-skills` | Complete guide for Astral's ty type checker |
+| `unit-testing` | Practical pytest patterns, fixtures, and mocks |
+| `docker-builder` | Production Dockerfiles and compose patterns |
+| `web-scraping` | Requests/BeautifulSoup/Playwright scraping patterns |
+| `api-testing` | OpenAPI-driven testing with schemathesis |
+| `linting` | Ruff linting rules and workflows |
+| `formatting` | Black/Ruff-format conventions |
+| `observability` | OpenTelemetry + Logfire for APIs |
+| `error-handling` | API error schemas and handling patterns |
+| `marimo-notebook` | Reproducible marimo notebooks |
+| `pydantic` | Pydantic models and validation |
 
 ## Common Commands
 
