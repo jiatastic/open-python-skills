@@ -1,0 +1,14 @@
+{
+  "name": "open-python-skills",
+  "owner": {
+    "name": "Haoxiang Jia",
+    "email": "henry@podpitch.com"
+  },
+  "plugins": [
+    {
+      "name": "open-python-skills",
+      "source": "./",
+      "description": "AI skill for Python backend development - FastAPI, SQLAlchemy, Redis, security patterns"
+    }
+  ]
+}

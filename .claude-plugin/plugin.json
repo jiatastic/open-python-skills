@@ -1,0 +1,11 @@
+{
+  "name": "open-python-skills",
+  "description": "AI skill for Python backend development - FastAPI, SQLAlchemy, Redis, security patterns",
+  "version": "0.1.5",
+  "author": {
+    "name": "Haoxiang Jia"
+  },
+  "homepage": "https://github.com/henryperkins/open-python-skills",
+  "repository": "https://github.com/henryperkins/open-python-skills",
+  "license": "MIT"
+}
